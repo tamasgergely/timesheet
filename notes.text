@@ -1,0 +1,24 @@
+Ha törlök
+
+- usert (soft delete)
+  - törlődnek a hozzá tartozó clientek, projektek, website-ok, timerek
+
+- clientet (soft delete)
+  - törlődnek a hozzá tartozó projektek, website-ok, timerek
+
+- projektet (soft delete)
+  - törlődnek a hozzá tartozó timerek
+
+- website-ot (soft delete)
+  - törlődnek a hozzá tartozó projektek, timerek
+
+- teamet (nincs soft delete)
+  - törlődik a tagok és a team kapcsolata, az ügyfél aki a team-hez kapcsolódott nem kapcsolódik többet
+
+  A team leader a saját csapataihoz tartozó ügyfelek weboldalait kezelhetik
+
++ a saját ügyfeleiknek a weboldalait
+
+
+1. Mi van ha úgy indítom el a timer-t, hogy nincs semmi kiválasztva. Jó lenne ha addig nem lenne aktív a gomb.
+   - hibát is ad és nem menti el a timer-t. Ha nem tölti ki a description-t akkor is hibát ad és nem menti a timert.
