@@ -44,9 +44,9 @@ class StoreProjectRequest extends FormRequest
     public function messages()
     {
         return [
-            'client.required' => 'Client name is required.',
+            'client.required' => 'The client field is required.',
             'client.exists' => 'Client does not exists.',
-            'name.unique' => 'Project name has already been taken.',
+            'name.required' => 'The project name field is required',
             'active.boolean' => 'Active field is invalid'
         ];
     }

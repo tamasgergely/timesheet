@@ -27,29 +27,31 @@ const props = defineProps({
     projects: Object,
     clients: Object,
     errors: Object,
-    project: {
-        type: Object,
-        default: null
-    },
     keyword: {
         type: String,
         default: ''
-    },
-    page: {
-        type: [String, Number],
-        default: 1
     }
 });
 
 const projectEditFormRef = ref(null);
 const search = ref(props.keyword ?? '');
-const showModal = ref(props.project !== null ? true : false);
+const showEditModal = ref(false);
+const project = ref(null);
+const formErrors = ref(props.errors);
+const formProcessing = ref(false);
 
 const submitForm = () => {
+    formProcessing.value = true;
     if (projectEditFormRef.value) {
         projectEditFormRef.value.update();
     }
 };
+
+const openProjectEditModal = (currentProject) => {
+    showEditModal.value = true;
+    project.value = currentProject;
+    formErrors.value = {};
+}
 
 watch(search, debounce(function (search) {
     router.get('/projects', { search: search }, {
@@ -57,29 +59,19 @@ watch(search, debounce(function (search) {
     })
 }, 300));
 
+provide('search', computed(() => search.value));
+provide('page', props.projects.current_page);
+
 watch(
-    () => props.project,
-    newProject => {
-        showModal.value = newProject !== null;
+    () => props.errors,
+    (errors) => {
+        formErrors.value = errors;
     }
 )
-
-provide('search', computed(() => search.value));
-provide('page', props.page);
 </script>
         
 <template>
     <Header title="Projects" />
-
-    <Modal v-if="project" title="Edit project" v-show="showModal" v-model="showModal">
-        <ProjectEditForm ref="projectEditFormRef"
-                         :errors="errors"
-                         :project="project"
-                         :clients="clients" />
-        <template #footer>
-            <Button @click="submitForm">Update project</Button>
-        </template>
-    </Modal>
 
     <div class="flex justify-between items-center">
         <div class="flex items-end">
@@ -110,17 +102,18 @@ provide('page', props.page);
         <tr v-for="project in projects.data" :key="project.id">
             <TableCell>{{ project.id }}</TableCell>
             <TableCell>
-                <Link :href="`/projects/${project.id}/edit`" class="text-sky-600 hover:underline">
+                <span class="text-sky-600 hover:underline cursor-pointer" @click="openProjectEditModal(project)">
                     {{ project.name }}
-                </Link>
+                </span>
             </TableCell>
             <TableCell>
-                <Link :href="`/clients/${project.client_id}/edit`" class="text-sky-600 hover:underline">
+                <span>
                     {{ project.client_name }}
-                </Link>
+                </span>
             </TableCell>
             <TableCell>
-                <a :href="project.website.domain" target="_blank" class="text-sky-600 hover:underline" v-if="project.website">
+                <a :href="project.website.domain" target="_blank" class="text-sky-600 hover:underline"
+                   v-if="project.website">
                     {{ project.website.domain }}
                 </a>
             </TableCell>
@@ -134,11 +127,26 @@ provide('page', props.page);
             </TableCell>
             <TableCell>
                 <div class="inline-flex justify-center relative w-full">
-                    <ActionPopup :items="projects.data" :item="project" type="projects" />
+                    <ActionPopup :items="projects.data"
+                                 :item="project"
+                                 type="projects"
+                                 @clickOnEdit="openProjectEditModal(project)" />
                 </div>
             </TableCell>
         </tr>
     </Table>
 
     <pagination class="mt-6" :links="projects.links" />
+
+    <Modal title="Edit project" v-show="showEditModal" v-model="showEditModal">
+        <ProjectEditForm ref="projectEditFormRef"
+                         :errors="formErrors"
+                         :project="project"
+                         :clients="clients" 
+                         @close-modal="formProcessing = false; showEditModal = false" 
+                         @validation-error="formProcessing = false" />
+        <template #footer>
+            <Button @click="submitForm" :disabled="formProcessing">Update project</Button>
+        </template>
+    </Modal>
 </template>

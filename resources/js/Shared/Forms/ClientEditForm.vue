@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref } from 'vue';
+import { inject, ref, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import Form from '@/Shared/Input/Form.vue';
 import InputText from '@/Shared/Input/Text.vue'
@@ -15,17 +15,18 @@ const props = defineProps({
 });
 
 const form = useForm({
-    name: props.client ? props.client.name : '',
-    domain: props.client ? props.client.website ? props.client.website.domain : '' : '',
-    active: props.client ? !!props.client.active : true,
-    team_id: props.client ? props.client.team_id : '',
+    name: props.client.name,
+    active: !!props.client.active,
+    team_id: props.client.team_id,
 });
 
 const search = inject('search');
+const page = inject('page');
 
 const update = () => {
-    form.put(`/clients/${props.client.id}?keyword=${search.value}`, {
+    form.put(`/clients/${props.client.id}?page=${page}&keyword=${search.value}`, {
         onSuccess: () => emit('closeModal'),
+        onError: errors => emit('validationError')
     });
 };
 
@@ -41,6 +42,15 @@ const showTeamChangeInfoText = (event) => {
 defineExpose({
     update
 });
+
+watch(
+    () => props.client,
+    (client) => {
+        form.name = client.name;
+        form.active = client.active;
+        form.team_id = client.team_id;
+    }
+)
 </script>
 
 <template>
@@ -49,12 +59,6 @@ defineExpose({
                    id="name"
                    label="Client name"
                    :error="errors.name"
-                   autocomplete="off" />
-
-        <InputText v-model="form.domain"
-                   id="domain"
-                   label="Main website"
-                   :error="errors.domain"
                    autocomplete="off" />
 
         <Select v-if="props.teams.length"

@@ -56,7 +56,12 @@ class User extends Authenticatable
         return $this->hasMany(Project::class);
     }
 
-    public function leaderTeams()
+    public function timers()
+    {
+        return $this->hasMany(Timer::class);
+    }
+
+    public function ledTeams()
     {
         return $this->hasMany(Team::class, 'leader_id');
     }
@@ -93,6 +98,6 @@ class User extends Authenticatable
      */
     public function getTeamIdsForLeader()
     {
-        return $this->leaderTeams->pluck('id')->toArray();
+        return $this->ledTeams->pluck('id')->toArray();
     }
 }

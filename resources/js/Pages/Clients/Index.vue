@@ -33,17 +33,9 @@ const props = defineProps({
         default: []
     },
     errors: Object,
-    client: {
-        type: Object,
-        default: null
-    },
     keyword: {
         type: String,
         default: ''
-    },
-    page: {
-        type: Number,
-        default: 1
     }
 })
 
@@ -52,18 +44,23 @@ const websiteNewFormRef = ref(null);
 const websiteEditFormRef = ref(null);
 
 const search = ref(props.keyword ?? '');
-const showEditModal = ref(props.client !== null ? true : false);
-const showWebsiteModal = ref(false);
+const showClientEditModal = ref(false);
+const showWebsiteCreateModal = ref(false);
 const showWebsiteEditModal = ref(false);
 const currentClientId = ref(0);
 const currentWebsite = ref({});
+const client = ref(null);
+const formErrors = ref(props.errors);
+const formProcessing = ref(false);
 
 const addWebsite = (clientId) => {
-    showWebsiteModal.value = true;
+    formErrors.value = {};
+    showWebsiteCreateModal.value = true;
     currentClientId.value = clientId;
 }
 
 const editWebsite = (website) => {
+    formErrors.value = {};
     showWebsiteEditModal.value = true;
     currentWebsite.value = website;
 }
@@ -97,25 +94,34 @@ watch(search, (debounce(function (newSearch) {
 }, 300)));
 
 provide('search', computed(() => search.value));
-provide('page', props.page);
+provide('page', props.clients.current_page);
 
 const submitClientForm = () => {
+    formProcessing.value = true;
     if (clientEditFormRef.value) {
         clientEditFormRef.value.update();
     }
 };
 
 const submitWebsiteNewForm = () => {
+    formProcessing.value = true;
     if (websiteNewFormRef.value) {
         websiteNewFormRef.value.submit();
     }
 };
 
 const submitWebsiteEditForm = () => {
+    formProcessing.value = true;
     if (websiteEditFormRef.value) {
         websiteEditFormRef.value.update();
     }
 };
+
+const openClientEditModal = (currentClient) => {
+    showClientEditModal.value = true;
+    client.value = currentClient;
+    formErrors.value = {};
+}
 
 const page = usePage();
 
@@ -123,52 +129,24 @@ const authUser = computed(() => {
     return page.props.auth.user;
 });
 
-const userHasRights = (id) => {  
-    if (authUser.value.role === 'User'){
+const userHasRights = (id) => {
+    if (authUser.value.role === 'User') {
         return authUser.value.id === id;
     }
 
     return true;
 };
+
+watch(
+    () => props.errors,
+    (errors) => {
+        formErrors.value = errors;
+    }
+)
 </script>
         
 <template>
     <Header title="Clients" />
-
-    <Modal title="Edit client" v-show="showEditModal" v-model="showEditModal">
-        <ClientEditForm ref="clientEditFormRef"
-                        :errors="errors"
-                        :teams="teams"
-                        :client="client"
-                        @close-modal="showEditModal = false" />
-
-        <template #footer>
-            <Button @click="submitClientForm">Update client</Button>
-        </template>
-    </Modal>
-
-    <Modal title="New website" v-show="showWebsiteModal" v-model="showWebsiteModal">
-        <WebsiteNewForm ref="websiteNewFormRef"
-                        :errors="errors"
-                        :clientId=currentClientId
-                        @close-modal="showWebsiteModal = false" />
-
-        <template #footer>
-            <Button @click="submitWebsiteNewForm">Save</Button>
-        </template>
-    </Modal>
-
-    <Modal title="Edit website" v-show="showWebsiteEditModal" v-model="showWebsiteEditModal">
-        <WebsiteEditForm ref="websiteEditFormRef"
-                         :errors="errors"
-                         :clientId=currentClientId
-                         :website="currentWebsite"
-                         @close-modal="showWebsiteEditModal = false" />
-
-        <template #footer>
-            <Button @click="submitWebsiteEditForm">Update website</Button>
-        </template>
-    </Modal>
 
     <div class="flex justify-between items-center">
         <div class="flex items-end">
@@ -199,10 +177,11 @@ const userHasRights = (id) => {
         <tr v-for="client in clients.data" :key="client.id">
             <TableCell>{{ client.id }}</TableCell>
             <TableCell>
-                <Link :href="`/clients/${client.id}/edit`" class="text-sky-600 hover:underline"
-                      v-if="userHasRights(client.user_id)">
-                {{ client.name }}
-                </Link>
+                <span v-if="userHasRights(client.user_id)"
+                      @click="openClientEditModal(client)"
+                      class="text-sky-600 hover:underline cursor-pointer">
+                    {{ client.name }}
+                </span>
                 <template v-else>
                     {{ client.name }} <br>
                     <span class="text-xs">Created by team mate</span>
@@ -237,11 +216,54 @@ const userHasRights = (id) => {
             <TableCell>
                 <div class="inline-flex justify-center relative w-full"
                      v-if="userHasRights(client.user_id)">
-                    <ActionPopup :items="clients.data" :item="client" type="clients" />
+                    <ActionPopup :items="clients.data"
+                                 :item="client" 
+                                 type="clients" 
+                                 @clickOnEdit="openClientEditModal(client)" />
                 </div>
             </TableCell>
         </tr>
     </Table>
 
     <pagination class="mt-6" :links="clients.links" />
+
+    <Modal title="Edit client" v-show="showClientEditModal" v-model="showClientEditModal">
+        <ClientEditForm ref="clientEditFormRef"
+                        :errors="formErrors"
+                        :teams="teams"
+                        :client="client"
+                        @close-modal="formProcessing = false; showClientEditModal = false" 
+                        @validation-error="formProcessing = false" />
+
+        <template #footer>
+            <Button @click="submitClientForm" :disabled="formProcessing">
+                Update client
+            </Button>
+        </template>
+    </Modal>
+
+    <Modal title="New website" v-show="showWebsiteCreateModal" v-model="showWebsiteCreateModal">
+        <WebsiteNewForm ref="websiteNewFormRef"
+                        :errors="formErrors"
+                        :clientId=currentClientId
+                        @close-modal="formProcessing = false; showWebsiteCreateModal = false" 
+                        @validation-error="formProcessing = false" />
+
+        <template #footer>
+            <Button @click="submitWebsiteNewForm" :disabled="formProcessing">Save</Button>
+        </template>
+    </Modal>
+
+    <Modal title="Edit website" v-show="showWebsiteEditModal" v-model="showWebsiteEditModal">
+        <WebsiteEditForm ref="websiteEditFormRef"
+                         :errors="formErrors"
+                         :clientId=currentClientId
+                         :website="currentWebsite"
+                         @close-modal="formProcessing = false; showWebsiteEditModal = false" 
+                         @validation-error="formProcessing = false" />
+
+        <template #footer>
+            <Button @click="submitWebsiteEditForm" :disabled="formProcessing">Update website</Button>
+        </template>
+    </Modal>
 </template>

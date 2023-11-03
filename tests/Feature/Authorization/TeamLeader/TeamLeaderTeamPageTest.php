@@ -85,22 +85,6 @@ class TeamLeaderTeamPageTest extends TestCase
         $response->assertRedirect('/teams');
     }    
 
-    public function test_team_leader_can_not_edit_another_team()
-    {
-        $user = User::factory()->create([
-            'role_id' => Role::TEAM_LEADER
-        ]);
-
-        $team = Team::create([
-            'name' => 'Other team',
-            'leader_id' => $user->id
-        ]);
-
-        $response = $this->actingAs($this->user)->get('/teams/' . $team->id . '/edit');
-
-        $response->assertStatus(403);
-    }
-
     public function test_team_leader_can_not_update_another_team()
     {
         $user = User::factory()->create([
@@ -118,18 +102,6 @@ class TeamLeaderTeamPageTest extends TestCase
 
         $response->assertStatus(403);
 
-    }
-
-    public function test_team_leader_can_edit_own_team()
-    {
-        $team = Team::create([
-            'name' => 'Own team',
-            'leader_id' => $this->user->id
-        ]);
-
-        $response = $this->actingAs($this->user)->get('/teams/' . $team->id . '/edit');
-
-        $response->assertStatus(200);
     }
 
     public function test_team_leader_can_update_own_team()

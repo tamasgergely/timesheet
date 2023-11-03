@@ -61,15 +61,6 @@ class AdminTeamPageTest extends TestCase
         $response->assertRedirect('/teams');
     }
 
-    public function test_admin_can_edit_any_team()
-    {
-        $team = Team::factory()->create();
-
-        $response = $this->actingAs($this->user)->get('/teams/' . $team->id . '/edit');
-
-        $response->assertStatus(200);
-    }
-
     public function test_admin_can_update_any_team()
     {
         $user = User::factory()->create(['role_id' => Role::TEAM_LEADER]);

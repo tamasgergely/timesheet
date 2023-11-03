@@ -58,13 +58,6 @@ class UserTeamPageTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_user_can_not_edit_team()
-    {
-        $response = $this->actingAs($this->user)->get('/teams/' . $this->team->id . '/edit');
-
-        $response->assertStatus(403);
-    }
-
     public function test_user_can_not_update_team()
     {
         $response = $this->actingAs($this->user)->put('/teams/' . $this->team->id, [

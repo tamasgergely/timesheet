@@ -1,5 +1,5 @@
 <script setup>
-import { router, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import Form from '@/Shared/Input/Form.vue';
 import InputText from '@/Shared/Input/Text.vue'
 import InputCheckbox from '@/Shared/Input/Checkbox.vue'
@@ -20,7 +20,7 @@ const form = useForm({
 </script>
 
 <template>
-    <form @submit.prevent="router.post('/clients', form)"
+    <form @submit.prevent="form.post('/clients', form)"
           class="bg-white p-10 mt-5 flex flex-col gap-10 shadow rounded">
 
         <InputText v-model="form.name"
@@ -56,7 +56,7 @@ const form = useForm({
                        labelClass="flex items-center w-60"
                        :error="errors.active" />
 
-        <Button type="submit">
+        <Button type="submit" :disabled="form.processing">
             Save
         </Button>
     </form>

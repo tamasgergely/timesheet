@@ -23,27 +23,32 @@ defineOptions({
 const props = defineProps({
     teams: Object,
     errors: Object,
-    team: Object,
     teamLeaders: Object,
     keyword: {
         type: String,
         default: ''
-    },
-    page: {
-        type: Number,
-        default: 1
     }
 })
 
 const teamEditFormRef = ref(null);
 const search = ref(props.keyword ?? '');
-const showEditModal = ref(props.team !== null ? true : false);
+const showEditModal = ref(false);
+const team = ref(null);
+const formErrors = ref(props.errors);
+const formProcessing = ref(false);
 
 const submitForm = () => {
+    formProcessing.value = true;
     if (teamEditFormRef.value) {
         teamEditFormRef.value.update();
     }
 };
+
+const openTeamEditModal = (currentTeam) => {
+    showEditModal.value = true;
+    team.value = currentTeam;
+    formErrors.value = {};
+}
 
 watch(search, (debounce(function (newSearch) {
     router.get('/teams', { search: newSearch }, {
@@ -51,8 +56,15 @@ watch(search, (debounce(function (newSearch) {
     })
 }, 300)));
 
+watch(
+    () => props.errors,
+    (errors) => {
+        formErrors.value = errors;
+    }
+)
+
 provide('search', computed(() => search.value));
-provide('page', props.page);
+provide('page', props.teams.current_page);
 
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
@@ -60,18 +72,6 @@ const authUser = computed(() => page.props.auth.user);
         
 <template>
     <Header title="Teams" />
-
-    <Modal title="Edit team" v-show="showEditModal" v-model="showEditModal">
-        <TeamEditForm ref="teamEditFormRef"
-                      :errors="errors"
-                      :team="team"
-                      :team-leaders="teamLeaders"
-                      @close-modal="showEditModal = false" />
-
-        <template #footer>
-            <Button @click="submitForm">Update team</Button>
-        </template>
-    </Modal>
 
     <div class="flex justify-between items-center">
         <div class="flex items-end">
@@ -102,38 +102,46 @@ const authUser = computed(() => page.props.auth.user);
         <tr v-for="team in teams.data" :key="team.id">
             <TableCell>{{ team.id }}</TableCell>
             <TableCell>
-                <Link :href="`/teams/${team.id}/edit`" class="text-sky-600 hover:underline">
-                {{ team.name }}
-                </Link>
+                <span class="text-sky-600 hover:underline cursor-pointer" @click="openTeamEditModal(team)">
+                    {{ team.name }}
+                </span>
             </TableCell>
             <TableCell>
-                <Link :href="`/users/${team.user.id}/edit`" class="text-sky-600 hover:underline">
+                <span>
                     {{ team.user.name }}
-                </Link>
+                </span>
             </TableCell>
             <TableCell>
                 <template v-for="(user, index) in team.users" :key="user.id">
-                    
-                    <Link v-if="authUser.role === 'Admin'" :href="`/users/${user.id}/edit`"
-                            class="text-sky-600 hover:underline">
-                        {{ user.name }}
-                    </Link>
-                    <span v-else>{{ user.name }}</span>
-
+                    <span>{{ user.name }}</span>
                     <span v-if="index !== team.users.length - 1">, </span>
-                
-                
                 </template>
             </TableCell>
             <TableCell>{{ new Date(team.created_at).toLocaleString('hu-hu') }}</TableCell>
             <TableCell>{{ new Date(team.updated_at).toLocaleString('hu-hu') }}</TableCell>
             <TableCell>
                 <div class="inline-flex justify-center relative w-full">
-                    <ActionPopup :items="teams.data" :item="team" type="teams" />
+                    <ActionPopup :items="teams.data"
+                                 :item="team" 
+                                 type="teams" 
+                                 @clickOnEdit="openTeamEditModal(team)" />
                 </div>
             </TableCell>
         </tr>
     </Table>
 
     <pagination class="mt-6" :links="teams.links" />
+
+    <Modal title="Edit team" v-show="showEditModal" v-model="showEditModal">
+        <TeamEditForm ref="teamEditFormRef"
+                      :errors="formErrors"
+                      :team="team"
+                      :team-leaders="teamLeaders"
+                      @close-modal="formProcessing = false; showEditModal = false" 
+                      @validation-error="formProcessing = false" />
+
+        <template #footer>
+            <Button @click="submitForm" :disabled="formProcessing">Update team</Button>
+        </template>
+    </Modal>
 </template>

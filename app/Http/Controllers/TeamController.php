@@ -18,6 +18,7 @@ class TeamController extends Controller
 
         return inertia('Teams/Index', [
             'teams' => $this->getTeams(),
+            'teamLeaders' => Auth::user()->role_id === Role::ADMIN ? $this->getTeamLeaders() : null,
             'keyword' => $request->search,
             'team' => null
         ]);
@@ -47,18 +48,6 @@ class TeamController extends Controller
                          ->with('success', 'Team saved successfully!');
     }
 
-    public function edit(Request $request, Team $team)
-    {
-        $this->authorize('update', $team);
-
-        return inertia('Teams/Index', [
-            'keyword' => $request->search,
-            'team' => $team,
-            'teams' => $this->getTeams(),
-            'teamLeaders' => Auth::user()->role_id === Role::ADMIN ? $this->getTeamLeaders() : null
-        ]);
-    }
-
     public function update(UpdateTeamRequest $request, Team $team)
     {
         $this->authorize('update', $team);
@@ -68,7 +57,7 @@ class TeamController extends Controller
 
         $team->save();
 
-        return redirect()->route('teams.index', ['search'=> $request->keyword])
+        return redirect()->route('teams.index', ['page' => $request->page, 'search'=> $request->keyword])
                          ->with('success', 'Team updated successfully!');
     }
 

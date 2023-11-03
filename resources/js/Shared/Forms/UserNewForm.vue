@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { router, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import Form from '@/Shared/Input/Form.vue';
 import InputText from '@/Shared/Input/Text.vue';
 import Select from '@/Shared/Input/Select.vue';
@@ -32,7 +32,7 @@ const uploadAvatar = (e) => {
 </script>
 
 <template>
-    <form @submit.prevent="router.post('/users', form)"
+    <form @submit.prevent="form.post('/users', form)"
           class="bg-white p-10 mt-5 flex flex-col gap-10 shadow rounded">
 
         <div class="flex items-center">
@@ -108,7 +108,7 @@ const uploadAvatar = (e) => {
                    class="flex justify-between gap-10"
                    labelClass="flex items-center w-60" />
 
-        <Button type="submit">
+        <Button type="submit" :disabled="form.processing">
             Save
         </Button>
     </form>

@@ -28,7 +28,8 @@ const submit = () => {
         onSuccess: () => {
             form.domain = '';
             emit('closeModal');
-        } 
+        },
+        onError: errors => emit('validationError')
     })
 }
 

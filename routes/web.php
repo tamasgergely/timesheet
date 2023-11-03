@@ -18,9 +18,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [TimerController::class, 'index'])
         ->name('dashboard');
 
-    Route::resource('clients', ClientController::class)->except(['show']);
+    Route::resource('clients', ClientController::class)->except(['show', 'edit']);
 
-    Route::resource('projects', ProjectController::class)->except(['show']);
+    Route::resource('projects', ProjectController::class)->except(['show', 'edit']);
 
     Route::resource('websites', WebsiteController::class)->only(['store', 'update', 'destroy']);
 
@@ -28,7 +28,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/users/upload-profile-image', [AvatarController::class, 'store']);
 
-    Route::resource('teams', TeamController::class)->except(['show']);
+    Route::resource('teams', TeamController::class)->except(['show', 'edit']);
 
     Route::get('/reports', [ReportController::class, 'index']);
 

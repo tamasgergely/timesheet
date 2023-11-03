@@ -129,88 +129,33 @@ class UserClientPageTest extends TestCase
 
     }
 
-    public function test_user_can_not_edit_another_users_client()
-    {
-        $client = Client::factory()->create();
-
-        $response = $this->actingAs($this->user)->get('/clients/ ' . $client->id . '/edit');
-
-        $response->assertStatus(403);
-    }
-
-    public function test_user_can_not_edit_teammates_client()
-    {
-        $client = Client::factory()->create(['team_id' => $this->team->id]);
-
-        $response = $this->actingAs($this->user)->get('/clients/ ' . $client->id . '/edit');
-
-        $response->assertStatus(403);
-    }
-
-    public function test_user_can_edit_own_client()
-    {
-        $client = Client::factory()->create(['user_id' => $this->user->id]);
-
-        $response = $this->actingAs($this->user)->get('/clients/' . $client->id . '/edit');
-
-        $response->assertStatus(200);
-    }
-
     public function test_user_can_not_update_anothers_users_client()
     {
         $client = Client::factory()->create();
 
-        $response = $this->actingAs($this->user)->put('/clients/' . $client->id . '/edit', [
+        $response = $this->actingAs($this->user)->put('/clients/' . $client->id, [
             'name' => 'Test client',
-            'active' => 1
+            'active' => 1,
+            'team_id' => ''
         ]);
 
-        $response->assertStatus(405);
+        $response->assertStatus(403);
     }
 
     public function test_user_can_not_update_teammates_client()
     {
         $client = Client::factory()->create(['team_id' => $this->team->id]);
 
-        $response = $this->actingAs($this->user)->put('/clients/' . $client->id . '/edit', [
-            'name' => 'Test client',
-            'active' => 1
-        ]);
-
-        $response->assertStatus(405);
-    }
-
-    public function test_user_can_update_own_client_with_website()
-    {
-        $client = Client::factory()
-                    ->has(Website::factory()->count(1))
-                    ->create(['user_id' => $this->user->id]);
-
         $response = $this->actingAs($this->user)->put('/clients/' . $client->id, [
             'name' => 'Test client',
             'active' => 1,
-            'team_id' => '',
-            'domain' => 'http://www.test.com'
+            'team_id' => ''
         ]);
 
-        $this->assertDatabaseHas('clients', [
-            'name' => 'Test client',
-            'active' => 1,
-            'user_id' => $this->user->id,
-            'team_id' => null
-        ]);
-
-        $this->assertDatabaseHas('websites', [
-            'client_id' => $client->id,
-            'domain' => 'http://www.test.com'
-        ]);
-
-        $response->assertStatus(302);
-        $response->assertRedirect('/clients');
-        $response->assertSessionHas('success');
+        $response->assertStatus(403);
     }
 
-    public function test_user_can_update_own_client_without_website()
+    public function test_user_can_update_own_client()
     {
         $client = Client::factory()
                     ->has(Website::factory()->count(1))

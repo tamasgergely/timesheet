@@ -141,41 +141,6 @@ class TeamLeaderClientPageTest extends TestCase
         $response->assertRedirect('/clients');
     }
 
-    public function test_team_leader_can_not_edit_another_users_client()
-    {
-        $client = Client::factory()->create();
-
-        $response = $this->actingAs($this->user)->get('/clients/' . $client->id . '/edit');
-
-        $response->assertStatus(403);
-    }
-
-    public function test_team_leader_can_edit_own_client()
-    {
-        $client = Client::factory(['user_id' => $this->user->id])->create();
-
-        $response = $this->actingAs($this->user)->get('/clients/' . $client->id . '/edit');
-
-        $response->assertStatus(200);
-    }
-
-    public function test_team_leader_can_edit_own_teams_clients()
-    {
-        // Client of the team leader's team
-        $teamMate = User::factory()->create();
-        $teamMate->teams()->attach($this->team->id);
-       
-        $client = Client::factory()->create([
-            'name' => 'Team client',
-            'user_id' => $teamMate->id,
-            'team_id' => $this->team->id
-        ]);
-
-        $response = $this->actingAs($this->user)->get('/clients/' . $client->id . '/edit');
-
-        $response->assertStatus(200);
-    }
-
     public function test_team_leader_can_not_update_another_users_client()
     {
         $client = Client::factory()->create();
@@ -189,30 +154,7 @@ class TeamLeaderClientPageTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_team_leader_can_update_own_client_with_website()
-    {
-        $client = Client::factory(['user_id' => $this->user->id])
-                    ->has(Website::factory()->count(1))
-                    ->create();
-
-        $response = $this->actingAs($this->user)->put('/clients/' . $client->id, [
-            'name' => 'Test client',
-            'active' => 1,
-            'domain' => 'http://www.test.com'
-        ]);
-
-        $client = $client->fresh();
-
-        $this->assertEquals('Test client', $client->name);
-        $this->assertEquals($this->user->id, $client->user_id);
-        $this->assertEquals('http://www.test.com', $client->websites()->first()->domain);
-        
-        $response->assertStatus(302);
-        $response->assertRedirect('/clients');
-        $response->assertSessionHas('success');
-    }
-
-    public function test_team_leader_can_update_own_client_without_website()
+    public function test_team_leader_can_update_own_client()
     {
         $client = Client::factory(['user_id' => $this->user->id])
                     ->has(Website::factory()->count(1))
@@ -233,40 +175,7 @@ class TeamLeaderClientPageTest extends TestCase
         $response->assertSessionHas('success');
     }
 
-    public function test_team_leader_can_update_own_teams_clients_with_website()
-    {
-        // Client of the team leader's team
-        $teamMate = User::factory()->create();
-        $teamMate->teams()->attach($this->team->id);
-               
-        $client = Client::factory()
-                    ->has(Website::factory()->count(1))
-                    ->create([
-                        'name' => 'Team client',
-                        'user_id' => $teamMate->id,
-                        'team_id' => $this->team->id
-                    ]);
-
-        $response = $this->actingAs($this->user)->put('/clients/' . $client->id, [
-            'name' => 'Test client',
-            'active' => 1,
-            'domain' => 'http://www.test.com'
-        ]);
-
-        $client = $client->fresh();
-
-        $this->assertEquals('Test client', $client->name);
-        $this->assertEquals($teamMate->id, $client->user_id);
-        $this->assertEquals('http://www.test.com', $client->websites()->first()->domain);
-        
-        $response->assertStatus(302);
-        $response->assertRedirect('/clients');
-        $response->assertSessionHas('success');
-
-        
-    }
-
-    public function test_team_leader_can_update_own_teams_clients_without_website()
+    public function test_team_leader_can_update_own_teams_clients()
     {
         // Client of the team leader's team
         $teamMate = User::factory()->create();
@@ -293,8 +202,6 @@ class TeamLeaderClientPageTest extends TestCase
         $response->assertStatus(302);
         $response->assertRedirect('/clients');
         $response->assertSessionHas('success');
-
-        
     }
 
     public function test_team_leader_can_not_delete_another_users_client()
@@ -582,5 +489,4 @@ class TeamLeaderClientPageTest extends TestCase
 
         $response->assertStatus(403);
     }
-
 }

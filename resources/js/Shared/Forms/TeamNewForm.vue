@@ -1,5 +1,5 @@
 <script setup>
-import { router, useForm, usePage } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import Form from '@/Shared/Input/Form.vue';
 import InputText from '@/Shared/Input/Text.vue';
@@ -22,7 +22,7 @@ const authUser = computed(() => page.props.auth.user);
 </script>
 
 <template>
-    <form @submit.prevent="router.post('/teams', form)"
+    <form @submit.prevent="form.post('/teams', form)"
           class="bg-white p-10 mt-5 flex flex-col gap-10 shadow rounded">
 
         <InputText v-model="form.name"
@@ -44,7 +44,7 @@ const authUser = computed(() => page.props.auth.user);
             </option>
         </Select>
 
-        <Button type="submit">
+        <Button type="submit" :disabled="form.processing">
             Save
         </Button>
     </form>

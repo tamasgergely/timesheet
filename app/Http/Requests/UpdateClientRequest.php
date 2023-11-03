@@ -32,7 +32,6 @@ class UpdateClientRequest extends FormRequest
                 'max:255',
                 Rule::unique('clients')->ignore($this->client->id),
             ],
-            'domain' => 'nullable|max:255|url',
             'active' => 'boolean',
             'team_id' => 'nullable|exists:teams,id'
         ];

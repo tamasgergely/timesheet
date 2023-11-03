@@ -1,5 +1,5 @@
 <script setup>
-import { inject, computed } from 'vue';
+import { inject, computed, watch } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import Form from '@/Shared/Input/Form.vue';
 import InputText from '@/Shared/Input/Text.vue'
@@ -14,16 +14,17 @@ const props = defineProps({
 });
 
 const form = useForm({
-    name: props.team ? props.team.name : '',
-    leader_id: props.team ? props.team.leader_id : '',
-    created_at: props.team ? props.team.created_at : ''
+    name: props.team.name,
+    leader_id: props.team.leader_id
 });
 
 const search = inject('search');
+const page = inject('page');
 
 const update = () => {
-    form.put(`/teams/${props.team.id}?keyword=${search.value}`, {
+    form.put(`/teams/${props.team.id}?page=${page}&keyword=${search.value}`, {
         onSuccess: () => emit('closeModal'),
+        onError: errors => emit('validationError')
     });
 };
 
@@ -31,8 +32,16 @@ defineExpose({
     update
 });
 
-const page = usePage();
-const authUser = computed(() => page.props.auth.user);
+const currentPage = usePage();
+const authUser = computed(() => currentPage.props.auth.user);
+
+watch(
+    () => props.team,
+    (team) => {
+        form.name = team.name;
+        form.leader_id = team.leader_id
+    }
+)
 </script>
 
 <template>

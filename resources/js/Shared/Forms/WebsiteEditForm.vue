@@ -4,11 +4,11 @@ import { useForm } from '@inertiajs/vue3';
 import Form from '@/Shared/Input/Form.vue';
 import InputText from '@/Shared/Input/Text.vue'
 
-const emit = defineEmits(['closeModal']);
+const emit = defineEmits(['closeModal','validationError']);
 
 const props = defineProps({
     errors: Object,
-    website: Object
+    website: Object,
 });
 
 const form = useForm({
@@ -17,16 +17,10 @@ const form = useForm({
 });
 
 watch(
-    () => props.website.id,
-    (newWebsiteId) => {
-        form.website_id = newWebsiteId;
-    }
-);
-
-watch(
-    () => props.website.domain,
-    (newDomain) => {
-        form.domain = newDomain;
+    () => props.website,
+    (newWebsite) => {
+        form.website_id = newWebsite.id;
+        form.domain = newWebsite.domain;
     }
 );
 
@@ -35,6 +29,7 @@ const search = inject('search');
 const update = () => {
     form.put(`/websites/${props.website.id}?keyword=${search.value}`, {
         onSuccess: () => emit('closeModal'),
+        onError: errors => emit('validationError')
     });
 };
 

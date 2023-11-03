@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
+use App\Models\Team;
 use App\Models\Client;
-use App\Models\Website;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 
@@ -16,17 +16,23 @@ class ClientController extends Controller
     {
         return inertia('Clients/Index', [
             'clients' => $this->getClients(),
-            'keyword' => $request->search
+            'keyword' => $request->search,
+            'teams' => Auth::user()->role_id === Role::ADMIN ? Team::all() 
+                        : Auth::user()->teams->transform(fn ($team) => [
+                'id' => $team->id,
+                'name' => $team->name
+            ])
         ]);
     }
 
     public function create()
     {
         return inertia('Clients/Create', [
-            'teams' => Auth::user()->teams->transform(fn ($team) => [
+            'teams' => Auth::user()->role_id === Role::ADMIN ? Team::all() 
+                        : Auth::user()->teams->transform(fn ($team) => [
                 'id' => $team->id,
                 'name' => $team->name
-                ])
+            ])
         ]);
     }
 
@@ -50,23 +56,6 @@ class ClientController extends Controller
                          ->with('success', 'Client saved successfully!');
     }
     
-    public function edit(Request $request, Client $client)
-    {
-        $this->authorize('update', $client);
-        
-        $client->website = $client->websites()->first();
-
-        return inertia('Clients/Index', [
-            'keyword' => $request->search,
-            'client' => $client,
-            'clients' => $this->getClients(),
-            'teams' => Auth::user()->teams->transform(fn ($team) => [
-                'id' => $team->id,
-                'name' => $team->name
-                ])
-        ]);
-    }
-
     public function update(UpdateClientRequest $request, Client $client)
     {
         $this->authorize('update', $client);
@@ -76,25 +65,8 @@ class ClientController extends Controller
         $client->team_id = $request->team_id;
 
         $client->save();
-
-        if ($request->domain) {
-            $website = $client->websites->first();
-
-            if ($website){
-                $website->update([
-                    'domain' => $request->domain,
-                    'user_id' => Auth::id()
-                ]);
-            }else{
-                Website::create([
-                    'client_id' => $client->id,
-                    'domain' => $request->domain,
-                    'user_id' => Auth::id()
-                ]);
-            }
-        }
     
-        return redirect()->route('clients.index', ['search'=> $request->keyword])
+        return redirect()->route('clients.index', ['page' => $request->page,'search'=> $request->keyword])
                          ->with('success', 'Client updated successfully!');
     }
 
@@ -132,7 +104,8 @@ class ClientController extends Controller
                         'created_at' => $client->created_at,
                         'updated_at' => $client->updated_at,
                         'active' => $client->active,
-                        'websites' => $client->websites
+                        'websites' => $client->websites,
+                        'team_id' => $client->team_id
                     ]);
     }
 }

@@ -16,7 +16,6 @@ const props = defineProps({
                    text-white
                    border border-transparent rounded font-medium text-base 
                    focus:outline-none disabled:opacity-25 transition ease-in-out duration-150"
-
             :class="[width, bgColor]">
         <slot />
     </button>

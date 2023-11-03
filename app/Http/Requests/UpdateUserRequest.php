@@ -30,6 +30,7 @@ class UpdateUserRequest extends FormRequest
             'email' => [
                 'required',
                 'max:255',
+                'email',
                 Rule::unique('users')->ignore($this->user->id),
             ],
             'role_id' => [
@@ -39,6 +40,17 @@ class UpdateUserRequest extends FormRequest
             'password' => 'nullable|between:6,20|confirmed',
             'teams' => ['nullable', new Teams]
         ];
-
     }
+
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'role_id.required' => 'The role field is required.',
+        ];
+    }    
 }

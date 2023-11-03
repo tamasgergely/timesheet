@@ -17,6 +17,7 @@ class UserObserver
             $project->timers()->delete();
         });
         $user->projects()->delete();
+        $user->ledTeams()->delete();
     }
 
     /**

@@ -45,10 +45,40 @@ class AdminProjectPageTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_admin_see_all_project()
+    public function test_admin_see_users_project()
     {
         Project::factory()
-                ->for(Client::factory())
+                ->for(Client::factory()->create(['user_id' => User::factory(['role_id' => Role::USER])]))
+                ->count(5)
+                ->create();
+
+        $response = $this->actingAs($this->user)->get('/projects');
+
+        $response->assertInertia(function (Assert $page) {
+            $page->component('Projects/Index')
+                 ->has('projects.data', 5);
+        });
+    }
+
+    public function test_admin_see_teamleaders_project()
+    {
+        Project::factory()
+                ->for(Client::factory()->create(['user_id' => User::factory(['role_id' => Role::TEAM_LEADER])]))
+                ->count(5)
+                ->create();
+
+        $response = $this->actingAs($this->user)->get('/projects');
+
+        $response->assertInertia(function (Assert $page) {
+            $page->component('Projects/Index')
+                 ->has('projects.data', 5);
+        });
+    }
+
+    public function test_admin_see_admins_project()
+    {
+        Project::factory()
+                ->for(Client::factory()->create(['user_id' => User::factory(['role_id' => Role::ADMIN])]))
                 ->count(5)
                 ->create();
 
@@ -67,10 +97,9 @@ class AdminProjectPageTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_admin_can_create_new_project_for_any_client()
+    public function test_admin_can_create_new_project_for_users()
     {
-
-        $client = Client::factory()->create();
+        $client = Client::factory()->create(['user_id' => User::factory(['role_id' => Role::USER])]);
 
         $response = $this->actingAs($this->user)->post('/projects', [
             'client' => $client->id,
@@ -91,29 +120,64 @@ class AdminProjectPageTest extends TestCase
         $response->assertSessionHas('success');
     }
 
-    public function test_admin_can_edit_any_project()
+    public function test_admin_can_create_new_project_for_teamleaders()
     {
-        $project = Project::factory()
-            ->for(Client::factory()->create())
-            ->create();
+        $client = Client::factory()->create(['user_id' => User::factory(['role_id' => Role::TEAM_LEADER])]);
 
-        $response = $this->actingAs($this->user)->get('/projects/' . $project->id . '/edit');
+        $response = $this->actingAs($this->user)->post('/projects', [
+            'client' => $client->id,
+            'description' => 'Test project description',
+            'name' => 'Test project',
+            'active' => 1
+        ]);
 
-        $response->assertStatus(200);
+        $this->assertDatabaseHas('projects', [
+            'client_id' => $client->id,
+            'description' => 'Test project description',
+            'name' => 'Test project',
+            'active' => 1
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertRedirect('/projects');
+        $response->assertSessionHas('success');
     }
 
-    public function test_admin_can_update_any_project()
+    public function test_admin_can_create_new_project_for_admins()
+    {
+        $client = Client::factory()->create(['user_id' => User::factory(['role_id' => Role::ADMIN])]);
+
+        $response = $this->actingAs($this->user)->post('/projects', [
+            'client' => $client->id,
+            'description' => 'Test project description',
+            'name' => 'Test project',
+            'active' => 1
+        ]);
+
+        $this->assertDatabaseHas('projects', [
+            'client_id' => $client->id,
+            'description' => 'Test project description',
+            'name' => 'Test project',
+            'active' => 1
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertRedirect('/projects');
+        $response->assertSessionHas('success');
+    }
+
+    public function test_admin_can_update_users_project()
     {
         $project = Project::factory()
-            ->for(Client::factory()->create())
+            ->for(Client::factory()->create(['user_id' => User::factory(['role_id' => Role::USER])]))
             ->create([
                 'name' => 'Test project',
                 'description' => 'Test project description',
                 'active' => 1
             ]);
-
+        
         $this->actingAs($this->user)->put('/projects/' . $project->id, [
-            'client' => $project->client->id,
+            'client_id' => $project->client->id,
             'name' => 'Test project modified',
             'description' => 'Test project description modified',
             'active' => 1
@@ -126,10 +190,114 @@ class AdminProjectPageTest extends TestCase
         $this->assertEquals(1, $project->active);
     }
 
-    public function test_admin_can_delete_any_project()
+    public function test_admin_can_update_teamleaders_project()
     {
         $project = Project::factory()
-            ->for(Client::factory())
+            ->for(Client::factory()->create(['user_id' => User::factory(['role_id' => Role::TEAM_LEADER])]))
+            ->create([
+                'name' => 'Test project',
+                'description' => 'Test project description',
+                'active' => 1
+            ]);
+        
+        $this->actingAs($this->user)->put('/projects/' . $project->id, [
+            'client_id' => $project->client->id,
+            'name' => 'Test project modified',
+            'description' => 'Test project description modified',
+            'active' => 1
+        ]);
+
+        $project = $project->fresh();
+
+        $this->assertEquals('Test project modified', $project->name);
+        $this->assertEquals('Test project description modified', $project->description);
+        $this->assertEquals(1, $project->active);
+    }
+
+    public function test_admin_can_update_admins_project()
+    {
+        $project = Project::factory()
+            ->for(Client::factory()->create(['user_id' => User::factory(['role_id' => Role::ADMIN])]))
+            ->create([
+                'name' => 'Test project',
+                'description' => 'Test project description',
+                'active' => 1
+            ]);
+        
+        $this->actingAs($this->user)->put('/projects/' . $project->id, [
+            'client_id' => $project->client->id,
+            'name' => 'Test project modified',
+            'description' => 'Test project description modified',
+            'active' => 1
+        ]);
+
+        $project = $project->fresh();
+
+        $this->assertEquals('Test project modified', $project->name);
+        $this->assertEquals('Test project description modified', $project->description);
+        $this->assertEquals(1, $project->active);
+    }
+
+    public function test_admin_can_delete_users_project()
+    {
+        $project = Project::factory()
+            ->for(Client::factory(['user_id' => User::factory(['role_id' => Role::USER])]))
+            ->has(Timer::factory()->count(1))
+            ->create();
+
+        $timers = $project->timers;
+
+        $response = $this->actingAs($this->user)->delete('/projects/' . $project->id,[],[
+                'http_referer' => '/projects'
+            ]
+        );
+
+        $project = $project->fresh();
+
+        $this->assertTrue($project->trashed());
+
+        foreach ($timers as $timer) {
+            $timer = $timer->fresh();
+            $this->assertTrue($timer->trashed());
+        };
+
+        $response->assertSessionHas('success');
+        $response->assertStatus(302);
+        $response->assertRedirect('/projects');
+    }
+
+    public function test_admin_can_delete_teamleaders_project()
+    {
+        $project = Project::factory()
+            ->for(Client::factory(['user_id' => User::factory(['role_id' => Role::TEAM_LEADER])]))
+            ->has(Timer::factory()->count(1))
+            ->create();
+
+        $timers = $project->timers;
+
+        $response = $this->actingAs($this->user)->delete('/projects/' . $project->id,[],[
+                'http_referer' => '/projects'
+            ]
+        );
+
+        $project = $project->fresh();
+
+        $this->assertTrue($project->trashed());
+
+        foreach ($timers as $timer) {
+            $timer = $timer->fresh();
+            $this->assertTrue($timer->trashed());
+        };
+
+        $response->assertSessionHas('success');
+        $response->assertStatus(302);
+        $response->assertRedirect('/projects');
+    }
+
+    public function test_admin_can_delete_admins_project()
+    {
+        $project = Project::factory()
+            ->for(Client::factory(['user_id' => User::factory(['role_id' => Role::ADMIN])]))
             ->has(Timer::factory()->count(1))
             ->create();
 

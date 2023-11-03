@@ -158,6 +158,9 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'domain' => 'website',
+        'role_id' => 'role'
+    ],
 
 ];

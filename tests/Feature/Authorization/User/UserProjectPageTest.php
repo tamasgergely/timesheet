@@ -155,33 +155,6 @@ class UserProjectPageTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_user_can_edit_own_project()
-    {
-        $project = Project::factory()
-            ->for(Client::factory()->state(['user_id' => $this->user->id]))
-            ->create([
-                'user_id' => $this->user->id,
-                'description' => 'Test project description',
-                'name' => 'Test project',
-                'active' => 1
-            ]);
-
-        $response = $this->actingAs($this->user)->get('/projects/' . $project->id . '/edit');
-
-        $response->assertStatus(200);
-    }
-
-    public function test_user_can_not_edit_another_users_project()
-    {
-        $project = Project::factory()
-            ->for(Client::factory())
-            ->create();
-
-        $response = $this->actingAs($this->user)->get('/projects/' . $project->id . '/edit');
-
-        $response->assertStatus(403);
-    }
-
     public function test_user_can_update_own_project()
     {
         $project = Project::factory()
@@ -194,7 +167,7 @@ class UserProjectPageTest extends TestCase
             ]);
 
         $this->actingAs($this->user)->put('/projects/' . $project->id, [
-            'client' => $project->client->id,
+            'client_id' => $project->client->id,
             'name' => 'Test project modified',
             'description' => 'Test project description modified',
             'active' => 1
@@ -210,11 +183,23 @@ class UserProjectPageTest extends TestCase
 
     public function test_user_can_not_update_another_users_project()
     {
-        $project = Project::factory()
-            ->for(Client::factory())
-            ->create();
+        $user = User::factory()->create(['role_id' => Role::USER]);
 
-        $response = $this->actingAs($this->user)->get('/projects/' . $project->id . '/edit');
+        $project = Project::factory()
+            ->for(Client::factory()->state(['user_id' => $user->id]))
+            ->create([
+                'user_id' => $user->id,
+                'name' => 'Test project',
+                'description' => 'Test project description',
+                'active' => 1
+            ]);
+
+        $response = $this->actingAs($this->user)->put('/projects/' . $project->id, [
+            'client_id' => $project->client->id,
+            'name' => 'Test project modified',
+            'description' => 'Test project description modified',
+            'active' => 1
+        ]);
 
         $response->assertStatus(403);
     }

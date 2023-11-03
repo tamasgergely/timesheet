@@ -23,31 +23,33 @@ defineOptions({
 const props = defineProps({
     users: Object,
     errors: Object,
-    user: {
-        type: Object,
-        default: null
-    },
     roles: Object,
     teams: Object,
     keyword: {
         type: String,
         default: ''
-    },
-    page: {
-        type: Number,
-        default: 1
     }
 })
 
 const userEditFormRef = ref(null);
 const search = ref(props.keyword ?? '');
-const showEditModal = ref(props.user !== null ? true : false);
+const showEditModal = ref(false);
+const user = ref(null);
+const formErrors = ref(props.errors);
+const formProcessing = ref(false);
 
 const submitForm = () => {
+    formProcessing.value = true;
     if (userEditFormRef.value) {
         userEditFormRef.value.update();
     }
 };
+
+const openUserEditModal = (currentUser) => {
+    showEditModal.value = true;
+    user.value = currentUser;
+    formErrors.value = {};
+}
 
 watch(search, (debounce(function (newSearch) {
     router.get('/users', { search: newSearch }, {
@@ -55,8 +57,15 @@ watch(search, (debounce(function (newSearch) {
     })
 }, 300)));
 
+watch(
+    () => props.errors,
+    (errors) => {
+        formErrors.value = errors;
+    }
+)
+
 provide('search', computed(() => search.value));
-provide('page', props.page);
+provide('page', props.users.current_page);
 
 const monogram = (name) => {
     const parts = name.split(' ', 2);
@@ -67,26 +76,13 @@ const monogram = (name) => {
 <template>
     <Header title="Users" />
 
-    <Modal title="Edit user" v-show="showEditModal" v-model="showEditModal" v-if="user">
-        <UserEditForm ref="userEditFormRef"
-                      :errors="errors"
-                      :user="user"
-                      :teams="teams"
-                      :roles="roles"
-                      @close-modal="showEditModal = false" />
-
-        <template #footer>
-            <Button @click="submitForm">Update user</Button>
-        </template>
-    </Modal>
-
     <div class="flex justify-between items-center">
         <div class="flex items-end">
             <InputText v-model="search"
-                        class="w-72"
-                        id="name"
-                        placeholder="Search ..."
-                        autocomplete="off" />
+                       class="w-72"
+                       id="name"
+                       placeholder="Search ..."
+                       autocomplete="off" />
             <Link href="/users" class="text-xs text-sky-600 hover:underline ml-2">Reset</Link>
         </div>
 
@@ -107,42 +103,59 @@ const monogram = (name) => {
             <TableHead class="w-24 text-center">Action</TableHead>
         </template>
 
-        <tr v-for="user in users.data" :key="user.id">
-            <TableCell>{{ user.id }}</TableCell>
-            <TableCell>
-                <Link :href="`/users/${user.id}/edit`" class="text-sky-600 hover:underline">
-                <div class="flex items-center gap-2">
-                    <div
+        <template v-if="users.data.length > 0">
+            <tr v-for="user in users.data" :key="user.id" class="hover:bg-gray-100">
+                <TableCell>{{ user.id }}</TableCell>
+                <TableCell>
+                    <div class="flex items-center gap-2 cursor-pointer" @click="openUserEditModal(user)">
+                        <div
                             class="inline-flex w-6 h-6 rounded-full overflow-hidden bg-sky-600 text-white justify-center items-center">
-                        <img v-if="user.avatar" :src="`/storage/images/${user.avatar}`" alt="">
-                        <div v-else class="text-[10px]">
-                            {{ monogram(user.name) }}
+                            <img v-if="user.avatar" :src="`/storage/images/${user.avatar}`" alt="">
+                            <div v-else class="text-[10px]">
+                                {{ monogram(user.name) }}
+                            </div>
                         </div>
+                        {{ user.name }}
                     </div>
-                    {{ user.name }}
-                </div>
-                </Link>
-            </TableCell>
-            <TableCell>{{ user.email }}</TableCell>
-            <TableCell>{{ user.role }}</TableCell>
-            <TableCell>
-                <template v-for="(team, index) in user.teams" :key="team.id">
-                    <Link :href="`/teams/${team.id}/edit`"
-                            class="text-sky-600 hover:underline">
-                    {{ team.name }}
-                    </Link>
-                    <span v-if="index !== user.teams.length - 1">, </span>
-                </template>
-            </TableCell>
-            <TableCell>{{ new Date(user.created_at).toLocaleString('hu-hu') }}</TableCell>
-            <TableCell>{{ new Date(user.updated_at).toLocaleString('hu-hu') }}</TableCell>
-            <TableCell>
-                <div class="inline-flex justify-center relative w-full">
-                    <ActionPopup :items="users.data" :item="user" type="users" />
-                </div>
-            </TableCell>
+                </TableCell>
+                <TableCell>{{ user.email }}</TableCell>
+                <TableCell>{{ user.role }}</TableCell>
+                <TableCell>
+                    <template v-for="(team, index) in user.teams" :key="team.id">
+                        <span>{{ team.label }}</span>
+                        <span v-if="index !== user.teams.length - 1">, </span>
+                    </template>
+                </TableCell>
+                <TableCell>{{ new Date(user.created_at).toLocaleString('hu-hu') }}</TableCell>
+                <TableCell>{{ new Date(user.updated_at).toLocaleString('hu-hu') }}</TableCell>
+                <TableCell>
+                    <div class="inline-flex justify-center relative w-full">
+                        <ActionPopup :items="users.data"
+                                    :item="user"
+                                    type="users"
+                                    @clickOnEdit="openUserEditModal(user)" />
+                    </div>
+                </TableCell>
+            </tr>
+        </template>
+        <tr v-else>
+            <TableCell colspan="8" class="text-center py-10">No users!</TableCell>
         </tr>
     </Table>
 
     <pagination class="mt-6" :links="users.links" />
+
+    <Modal title="Edit user" v-show="showEditModal" v-model="showEditModal">
+        <UserEditForm ref="userEditFormRef"
+                      :errors="formErrors"
+                      :user="user"
+                      :teams="teams"
+                      :roles="roles"
+                      @close-modal="formProcessing = false; showEditModal = false" 
+                      @validation-error="formProcessing = false" />
+
+        <template #footer>
+            <Button @click="submitForm" :disabled="formProcessing">Update user</Button>
+        </template>
+    </Modal>
 </template>

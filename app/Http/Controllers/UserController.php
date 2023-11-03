@@ -18,9 +18,16 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
+        $allTeams = [];
+        foreach (Team::pluck('id', 'name') as $team => $id) {
+            $allTeams[] = ['label' => $team, 'value' => $id];
+        };
+
         return inertia('Users/Index', [
             'users' => $this->getUsers(),
-            'keyword' => $request->search
+            'keyword' => $request->search,
+            'roles' => Auth::user()->role_id === Role::ADMIN ? Role::all() : null,
+            'teams' => Auth::user()->role_id === Role::ADMIN ? $allTeams : null
         ]);
     }
 
@@ -123,12 +130,12 @@ class UserController extends Controller
             $user->teams()->sync(Arr::pluck($request->teams ?? [], 'value'));
         }
 
-        if ($user['id'] === Auth::id()){
+        if ($user['id'] === Auth::id()) {
             return redirect()->back()
                              ->with('success', 'User updated successfully!');
         }
 
-        return redirect()->route('users.index', ['search'=> $request->keyword])
+        return redirect()->route('users.index', ['page' => $request->page, 'search'=> $request->keyword])
                          ->with('success', 'User updated successfully!');
     }
 
@@ -145,19 +152,30 @@ class UserController extends Controller
     
     private function getUsers()
     {
-        return User::filter(request()->only('search'))
+        $users = User::filter(request()->only('search'))
                      ->with('role', 'teams')
                      ->paginate(10)
-                     ->withQueryString()
-                     ->through(fn ($user) => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'role' => $user->role->name,
-                        'teams' => $user->teams,
-                        'avatar' => $user->avatar,
-                        'created_at' => $user->created_at,
-                        'updated_at' => $user->updated_at
-                    ]);
+                     ->withQueryString();
+
+
+        foreach ($users as $user) {
+            $userTeams = [];
+            foreach ($user->teams->pluck('id', 'name') as $team => $id) {
+                $userTeams[] = ['label' => $team, 'value' => $id];
+            };
+            $user->teams = $userTeams;
+        }
+
+        return $users->through(fn ($user) => [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'role' => $user->role->name,
+                            'role_id' => $user->role_id,
+                            'teams' => $user->teams,
+                            'avatar' => $user->avatar,
+                            'created_at' => $user->created_at,
+                            'updated_at' => $user->updated_at
+                        ]);           
     }
 }

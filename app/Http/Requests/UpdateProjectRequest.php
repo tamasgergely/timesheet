@@ -25,7 +25,7 @@ class UpdateProjectRequest extends FormRequest
     public function rules()
     {
         return [
-            'client' => 'required|exists:clients,id',
+            'client_id' => 'required|exists:clients,id',
             'name' => [
                 'required',
                 'max:255',
@@ -43,9 +43,9 @@ class UpdateProjectRequest extends FormRequest
     public function messages()
     {
         return [
-            'client.required' => 'Client is required.',
-            'client.exists' => 'Client does not exists.',
-            'name.unique' => 'Project name has already been taken.',
+            'client_id.required' => 'The client field is required.',
+            'client_id.exists' => 'Client does not exists.',
+            'name.required' => 'The project name is required.',
             'active.boolean' => 'Active field is invalid'
         ];
     }

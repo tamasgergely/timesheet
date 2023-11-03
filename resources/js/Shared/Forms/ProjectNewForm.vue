@@ -1,13 +1,12 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { router, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import Form from '@/Shared/Input/Form.vue';
 import Select from '@/Shared/Input/Select.vue'
 import InputText from '@/Shared/Input/Text.vue'
 import TextArea from '@/Shared/Input/TextArea.vue'
 import InputCheckbox from '@/Shared/Input/Checkbox.vue'
 import Button from '@/Shared/Input/Button.vue';
-import DatePicker from '@/Shared/Input/DatePicker.vue';
 
 const props = defineProps({
     errors: Object,
@@ -17,7 +16,6 @@ const props = defineProps({
 const form = useForm({
     name: '',
     description: '',
-    created_at: new Date(),
     active: true,
     client: '',
     website: ''
@@ -43,7 +41,7 @@ const loadWebsites = () => {
 </script>
 
 <template>
-    <form @submit.prevent="router.post('/projects', form)"
+    <form @submit.prevent="form.post('/projects', form)"
           class="bg-white p-10 mt-5 flex flex-col gap-10 shadow rounded">
 
         <Select v-model="form.client"
@@ -84,13 +82,6 @@ const loadWebsites = () => {
                   labelClass="flex items-center w-60"
                   :error="errors.description" />
 
-        <DatePicker id="created_at"
-                    class="flex "
-                    v-model="form.created_at"
-                    label="Created at"
-                    labelClass="flex items-center w-60"
-                    :error="errors.created_at" />
-
         <InputCheckbox v-model="form.active"
                        type="checkbox"
                        id="active"
@@ -98,7 +89,7 @@ const loadWebsites = () => {
                        labelClass="flex items-center w-60"
                        :error="errors.active" />
 
-        <Button type="submit">
+        <Button type="submit" :disabled="form.processing">
             Save
         </Button>
     </form>

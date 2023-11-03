@@ -159,55 +159,6 @@ class TeamLeaderProjectPageTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_team_leader_can_edit_own_project()
-    {
-        $project = Project::factory()
-            ->for(Client::factory()->state(['user_id' => $this->user->id]))
-            ->create([
-                'user_id' => $this->user->id,
-                'description' => 'Test project description',
-                'name' => 'Test project',
-                'active' => 1
-            ]);
-
-        $response = $this->actingAs($this->user)->get('/projects/' . $project->id . '/edit');
-
-        $response->assertStatus(200);
-    }
-    
-    public function test_team_leader_can_edit_teammates_project()
-    {
-        $teamMate = User::factory()->create();
-        $teamMate->teams()->attach($this->team->id);
-
-        $project = Project::factory()
-            ->for(Client::factory()->state([
-                'user_id' => $teamMate->id,
-                'team_id' => $this->team->id
-                ]))
-            ->create([
-                'user_id' => $teamMate->id,
-                'description' => 'Test project description',
-                'name' => 'Test project',
-                'active' => 1
-            ]);
-
-        $response = $this->actingAs($this->user)->get('/projects/' . $project->id . '/edit');
-
-        $response->assertStatus(200);
-    }
-
-    public function test_leader_can_not_edit_another_users_project()
-    {
-        $project = Project::factory()
-            ->for(Client::factory())
-            ->create();
-
-        $response = $this->actingAs($this->user)->get('/projects/' . $project->id . '/edit');
-
-        $response->assertStatus(403);
-    }
-
     public function test_team_leader_can_delete_own_project()
     {
         $project = Project::factory()

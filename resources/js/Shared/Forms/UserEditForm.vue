@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, computed } from 'vue';
+import { inject, ref, computed, watch } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import Form from '@/Shared/Input/Form.vue';
 import InputText from '@/Shared/Input/Text.vue'
@@ -20,19 +20,21 @@ const props = defineProps({
 });
 
 const form = useForm({
-    name: props.user ? props.user.name : '',
-    email: props.user ? props.user.email : '',
-    role_id: props.user ? props.user.role_id : '',
+    name: props.user.name,
+    email: props.user.email,
+    role_id: props.user.role_id,
     password: '',
     password_confirmation: '',
-    teams: props.user ? props.user.teams : ''
+    teams: props.user.teams
 });
 
 const search = inject('search');
+const page = inject('page');
 
 const update = () => {
-    form.put(`/users/${props.user.id}?keyword=${search.value}`, {
+    form.put(`/users/${props.user.id}?page=${page}&keyword=${search.value}`, {
         onSuccess: () => emit('closeModal'),
+        onError: errors => emit('validationError')
     });
 };
 
@@ -61,10 +63,19 @@ defineExpose({
     update
 });
 
-const page = usePage();
-const authUser = computed(() => page.props.auth.user);
-</script>
+const currentPage = usePage();
+const authUser = computed(() => currentPage.props.auth.user);
 
+watch(
+    () => props.user,
+    (user) => {
+        form.name = user.name;
+        form.email = user.email;
+        form.role_id = user.role_id;
+        form.teams = user.teams;
+    }
+)
+</script>
 
 <template>
     <Form @submit.prevent="update">

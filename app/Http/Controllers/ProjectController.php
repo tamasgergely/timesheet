@@ -16,13 +16,13 @@ class ProjectController extends Controller
         return inertia('Projects/Index', [
             'projects' => $this->getProjects(),
             'keyword' => $request->search,
-            'page' => $request->page ?? 1
+            'clients' => $this->getClients()
         ]);
     }
 
     public function create()
     {
-        return inertia('Projects/Create',[
+        return inertia('Projects/Create', [
             'clients' => $this->getClients()
         ]);
     }
@@ -46,34 +46,11 @@ class ProjectController extends Controller
                          ->with('success', 'Project saved successfully!');
     }
 
-    public function edit(Request $request, Project $project)
-    {
-        $this->authorize('update', $project);
-
-        $project = $project->load('client');
-
-        return inertia('Projects/Index', [
-            'project' => [
-                'id' => $project->id,
-                'client' => $project->client->id,
-                'name' => $project->name,
-                'description' => $project->description,
-                'created_at' => $project->created_at,
-                'active' => $project->active,
-                'website' => $project->website
-            ],
-            'projects' => $this->getProjects(),
-            'clients' => $this->getClients(),
-            'keyword' => $request->search,
-            'page' => $request->page
-        ]);
-    }
-
     public function update(UpdateProjectRequest $request, Project $project)
     {
         $this->authorize('update', $project);
         
-        $project->client_id = $request->client;
+        $project->client_id = $request->client_id;
         $project->website_id = $request->website ?? null;
         $project->name = $request->name;
         $project->description = $request->description;
@@ -81,7 +58,7 @@ class ProjectController extends Controller
         
         $project->save();
         
-        return redirect()->route('projects.index', ['search'=> $request->keyword])
+        return redirect()->route('projects.index', ['page' => $request->page,'search'=> $request->keyword])
                          ->with('success', 'Project updated successfully!');
     }
 
@@ -103,19 +80,19 @@ class ProjectController extends Controller
                       ->paginate(10)
                       ->withQueryString()
                       ->through(fn ($project) => [
-                          'id' => $project->id,
-                          'name' => $project->name,
-                          'client_id' => $project->client->id,
-                          'client_name' => $project->client->name ?? '',
-                          'description' => $project->description,
-                          'active' => $project->active,
-                          'website' => $project->website ?? null
-                      ]);        
+                        'id' => $project->id,
+                        'name' => $project->name,
+                        'client_id' => $project->client->id,
+                        'client_name' => $project->client->name ?? '',
+                        'description' => $project->description,
+                        'active' => $project->active,
+                        'website' => $project->website ?? null,
+                    ]);
     }
 
     private function getClients()
     {
-        return Client::select('id','name')
+        return Client::select('id', 'name')
                 ->with('websites:id,domain,client_id')
                 ->filterByUserRole()
                 ->get();
