@@ -7,6 +7,7 @@ use App\Models\Timer;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class TimerController extends Controller
 {
@@ -55,6 +56,24 @@ class TimerController extends Controller
 
     public function store(Request $request)
     {
+        $messages = [
+            'client_id.required' => 'The client field is required.',
+            'project_id.required' => 'The project field is required.',
+            'description.required' => 'The description field is required.',
+        ];
+
+        $validator = Validator::make($request->all(), [
+            'client_id' => 'required|exists:clients,id',
+            'project_id' => 'required|exists:projects,id',
+            'description' => 'required|string'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
         $timer = Timer::create([
             'user_id' => auth()->id(),
             'client_id' => $request->client_id,
@@ -74,6 +93,24 @@ class TimerController extends Controller
 
     public function update(Request $request)
     {
+        $messages = [
+            'client_id.required' => 'The client field is required.',
+            'project_id.required' => 'The project field is required.',
+            'description.required' => 'The description field is required.',
+        ];
+
+        $validator = Validator::make($request->all(), [
+            'client_id' => 'required|exists:clients,id',
+            'project_id' => 'required|exists:projects,id',
+            'description' => 'required|string'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
         $timer = Timer::where('user_id', auth()->id())
                       ->where('id', $request->id)
                       ->first();
@@ -111,7 +148,7 @@ class TimerController extends Controller
             $interval->stop = date('Y-m-d H:i:s', $request->time);
             $interval->save();
 
-            // Start new interval
+        // Start new interval
         } else {
             $interval = $timer->intervals()->create([
                 'start' => date('Y-m-d H:i:s', $request->time),

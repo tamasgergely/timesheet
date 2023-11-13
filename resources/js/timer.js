@@ -27,35 +27,26 @@ export default class Timer {
         }
     }
 
-    async updateTimerInterval() {
-        try {
-            const response = await axios.patch(`/timer/${this.id}`, {
-                id: this.id,
-                interval_id: this.interval_id,
-                description: this.description,
-                time: Date.now() / 1000,
-            });
+    async update(type = null){
+        let data = {
+            id: this.id,
+            interval_id: this.interval_id,
+            client_id: this.client_id,
+            project_id: this.project_id,
+            description: this.description
+        };
 
-            this.id = response.data.timer_id;
-            this.interval_id = response.data.interval_id;
-        } catch (error) {
-            console.log(error);
+        if (type === 'updateTime'){
+            data.time = Date.now() / 1000;
         }
-    }
 
-    async update(page, successMsg){
         try {
-            await axios.patch(`/timer/${this.id}`, {
-                id: this.id,
-                client_id: this.client_id,
-                project_id: this.project_id,
-                description: this.description
-            });
+            const response = await axios.patch(`/timer/${this.id}`, data);
 
-            page.props.flash.success = successMsg;
+            return response;
+
         } catch (error) {
-            page.props.flash.error = true
-            console.error(error);
+            throw error;
         }
     }
 
@@ -69,15 +60,18 @@ export default class Timer {
 
             this.id = response.data.timer_id;
             this.interval_id = response.data.interval_id;
+
+            return response;
+            
         } catch (error) {
-            console.log(error);
+            throw error;
         }
     }
 
     async destroy() {
         if (this.id){
             try {
-                const response = await axios.delete(`/timer/${this.id}`);
+                await axios.delete(`/timer/${this.id}`);
             } catch (error) {
                 console.log(error);
             }   

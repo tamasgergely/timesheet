@@ -26,7 +26,7 @@ class ReportController extends Controller
             return [
                 "id" => $timer->id,
                 'client_name' => $timer->client->name,
-                "project_name" => $timer->project->name,
+                "project_name" => $timer?->project?->name,
                 "description" => nl2br($timer->description),
                 'hours' => $sumIntervals['hours'],
                 'minutes' => $sumIntervals['minutes'],
