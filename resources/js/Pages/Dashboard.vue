@@ -75,7 +75,8 @@ props.initalTimers.forEach((item, index) => {
         sum_intervals: sumIntervals / 1000,
         containerClass: '',
         innerClass: '',
-        fullScreen: false
+        fullScreen: false,
+        errors: {}
     }));
 
     if (timers.value[index].stop === null) {
@@ -88,23 +89,26 @@ const addNewTimer = () => {
         key: timers.value.length + 1,
         id: null,
         interval_id: null,
-        client_id: 0,
+        client_id: '',
         projects: [],
         description: '',
         hours: 0,
         minutes: 0,
         seconds: 0,
+        errors: {}
     }));
 };
 
-const loadProjects = (timer, event) => {
-    let clientId = parseInt(event.target.value);
+const loadProjects = (timer, event) => {    
     timer.projects.length = 0;
+    timer.project_id = '';
 
-    if (clientId !== 0) {
+    if (event.target.value !== '') {
+        let clientId = parseInt(event.target.value);
+
         const client = props.clients.find(client => client.id === clientId);
         timer.client_name = client.name;
-        
+
         const result = client.projects;
         timer.projects.push(...result);
     }
@@ -112,36 +116,91 @@ const loadProjects = (timer, event) => {
 
 const page = usePage();
 
-const updateProject = (timer, event) => {
-   
+const updateProject = async (timer, event) => {
+
     let projectId = event.target.value;
 
-    if (projectId && timer.id) {
+    if (timer.id) {
         timer.project_id = projectId;
-        timer.update(page, 'Project updated successfully!');
+
+        try {
+            const response = await timer.update();
+            if (response.status === 200) {
+                setFlashSuccess('Project updated successfully!');
+                timer.errors = {};
+            }else {
+                setFlashError();
+            }
+        } catch (error) {
+            timer.errors = error.response.data.errors;
+            setFlashError();
+        }
     }
 };
 
-const updateTaskDescription = (timer, event) => {
+const updateTaskDescription = async (timer, event) => {
     let description = event.target.value;
 
-    if (description !== '' && timer.id) {
+    if (timer.id) {
         timer.description = description;
-        timer.update(page, 'Task description updated successfully!');
+        try {
+            const response = await timer.update();
+            if (response.status === 200) {
+                setFlashSuccess('Task description updated successfully!');
+                timer.errors = {};
+            }else {
+                setFlashError();
+            }
+        } catch (error) {
+            timer.errors = error.response.data.errors;
+            setFlashError();
+        }
     }
 };
 
-const process = (timer) => {
+const process = async (timer) => {
+    if (!timer.id) {
+        try {
+            const response = await timer.save();
+            if (response && response.status === 200) {
+                page.props.flash.error = null;
+                timer.errors = {};
+            } else {
+                setFlashError();
+                
+                return false;
+            }
+        } catch (error) {
+            // console.error('Hiba történt a timer.save() során:', error.response.data.errors);
+            timer.errors = error.response.data.errors;
+            setFlashError();
+            
+            return false;
+        }
+    } else {
+        try {
+            const response = await timer.update('updateTime');
+            if (response && response.status === 200) {
+                timer.id = response.data.timer_id;
+                timer.interval_id = response.data.interval_id;
+                page.props.flash.error = null;
+                timer.errors = {};
+            }else{
+                setFlashError();
+                
+                return false;
+            }           
+        } catch (error) {
+            setFlashError();
+            timer.errors = error.response.data.errors;
+            return false;
+        }
+    }
+
     if (timer.running) {
         stopTimer(timer);
     } else {
         startTimer(timer);
-    }
-
-    if (!timer.id) {
-        timer.save();
-    } else {
-        timer.updateTimerInterval();
     }
 };
 
@@ -190,6 +249,16 @@ const exitFullScreen = (timer) => {
     timer.containerClass = [];
     timer.innerClass = [];
 }
+
+const setFlashError = (msg = 'An error occured.') => {
+    page.props.flash.error = msg;
+    page.props.flash.success = null;
+}
+
+const setFlashSuccess = msg => {
+    page.props.flash.error = null;
+    page.props.flash.success = msg;
+}
 </script>
 
 <template>
@@ -202,10 +271,11 @@ const exitFullScreen = (timer) => {
     </Header>
 
     <div class="mx-auto">
-        <div id="project-timer-container" class="flex flex-wrap h-">
+        <div id="project-timer-container" class="flex flex-wrap">
             <template v-for="(timer, index) in timers" :key="timer.key">
                 <div class="w-1/5 p-2" :class="timer.containerClass" data-project-timer="">
-                    <div class="p-4 pb-16 bg-white border-b border-gray-200 relative" :class="timer.innerClass">
+                    <div class="p-4 pb-16 bg-white border-b border-gray-200 relative rounded-lg shadow-md"
+                         :class="timer.innerClass">
                         <a @click.prevent="closeClick(timer)"
                            class="block absolute right-0 cursor-pointer top-1 h-6 w-6 z-10">
                             &#x2715
@@ -214,54 +284,60 @@ const exitFullScreen = (timer) => {
                         <div class="flex flex-col justify-between gap-5 h-full">
                             <form class="flex flex-col gap-2 h-full">
                                 <div>
-                                    <InputSelect v-model="timer.client_id" @change="loadProjects(timer, $event)"
+                                    <InputSelect v-model="timer.client_id"
+                                                 @change="loadProjects(timer, $event)"
+                                                 :error="timer.errors.client_id ? timer.errors.client_id[0] : ''"
                                                  label="Client">
-                                        <option value="0">Please choose!</option>
+                                        <option value="">Please choose!</option>
                                         <option v-for="client in clients" :value="client.id" :key="client.id">
                                             {{ client.name }}
                                         </option>
                                     </InputSelect>
                                 </div>
                                 <div>
-                                    <InputSelect v-model="timer.project_id" label="Project"
-                                                 @change="updateProject(timer, $event)">
+                                    <InputSelect v-model="timer.project_id"
+                                                 label="Project"
+                                                 @change="updateProject(timer, $event)"
+                                                 :error="timer.errors.project_id ? timer.errors.project_id[0] : ''">
                                         <option value="">Please choose!</option>
                                         <option v-for="project in timer.projects" :value="project.id"
                                                 :key="project.id">
-                                            {{ project.name }} - {{ project.website.domain }}
+                                            {{ project.name }} {{ project.website ? '-' + project.website.domain : '' }}
                                         </option>
                                     </InputSelect>
                                 </div>
                                 <div class="relative flex-1">
-                                    <IconFullScreen class="absolute right-0 cursor-pointer"
+                                    <IconFullScreen class="absolute right-0 top-[10px] cursor-pointer z-10"
                                                     @click="showFullScreen(timer)"
                                                     v-show="!timer.fullScreen" />
 
                                     <InputTextArea v-model="timer.description"
                                                    id="description"
                                                    label="Task description"
-                                                   inputClass="h-full"
-                                                   class="h-5/6"
+                                                   :class="[{ 'h-[calc(100%-40px)]': timer.fullScreen }, 'relative']"
+                                                   :inputClass="[timer.fullScreen ? 'h-[calc(100%-30px)]' : 'h-20']"
+                                                   :error="timer.errors.description ? timer.errors.description[0] : ''"
                                                    :title="timer.description"
                                                    @blur="updateTaskDescription(timer, $event)" />
                                 </div>
                             </form>
 
-                            <div class="timer flex justify-between gap-5 absolute bottom-4 left-4 right-4">
-                                <div class="stopwatch flex mt-2 justify-between">
-                                    <span class="hours text-xl">
+                            <div class="timer flex justify-between gap-5 absolute bottom-2 left-4 right-4">
+                                <div class="stopwatch flex mt-1 justify-between">
+                                    <span class="hours text-2xl">
                                         {{ String(timer.hours).padStart(2, 0) }}
                                     </span>:
-                                    <span class="minutes text-xl">
+                                    <span class="minutes text-2xl">
                                         {{ String(timer.minutes).padStart(2, 0) }}
                                     </span>:
-                                    <span class="seconds text-xl">
+                                    <span class="seconds text-2xl">
                                         {{ String(timer.seconds).padStart(2, 0) }}
                                     </span>
                                 </div>
 
-                                <div class="start flex basis-44">
+                                <div class="start flex basis-32">
                                     <Button width="w-full"
+                                            class="py-0"
                                             :bg-color="timer.running ? 'bg-red-500 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
                                             @click="process(timer)">
                                         {{ !timer.running ? 'Start' : 'Stop' }}
