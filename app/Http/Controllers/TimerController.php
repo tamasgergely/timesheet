@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\Timer;
 use App\Models\Client;
 use Illuminate\Http\Request;
+use App\Http\Requests\TimerRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -54,26 +55,8 @@ class TimerController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(TimerRequest $request)
     {
-        $messages = [
-            'client_id.required' => 'The client field is required.',
-            'project_id.required' => 'The project field is required.',
-            'description.required' => 'The description field is required.',
-        ];
-
-        $validator = Validator::make($request->all(), [
-            'client_id' => 'required|exists:clients,id',
-            'project_id' => 'required|exists:projects,id',
-            'description' => 'required|string'
-        ], $messages);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         $timer = Timer::create([
             'user_id' => auth()->id(),
             'client_id' => $request->client_id,
@@ -91,26 +74,8 @@ class TimerController extends Controller
         ];
     }
 
-    public function update(Request $request)
+    public function update(TimerRequest $request)
     {
-        $messages = [
-            'client_id.required' => 'The client field is required.',
-            'project_id.required' => 'The project field is required.',
-            'description.required' => 'The description field is required.',
-        ];
-
-        $validator = Validator::make($request->all(), [
-            'client_id' => 'required|exists:clients,id',
-            'project_id' => 'required|exists:projects,id',
-            'description' => 'required|string'
-        ], $messages);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         $timer = Timer::where('user_id', auth()->id())
                       ->where('id', $request->id)
                       ->first();
