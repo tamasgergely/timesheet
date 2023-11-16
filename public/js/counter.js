@@ -1,23 +1,32 @@
-/******/ (() => { // webpackBootstrap
-var __webpack_exports__ = {};
-/*!*********************************!*\
-  !*** ./resources/js/counter.js ***!
-  \*********************************/
-var interval;
-self.addEventListener('message', function (e) {
-  switch (e.data) {
-    case 'start':
-      interval = setInterval(function () {
-        self.postMessage('tick');
-      }, 1000);
-      break;
+const accurateTimer = (fn, time = 1000) => {
+    let nextAt, timeout;
+    
+    nextAt = new Date().getTime() + time;
 
-    case 'stop':
-      clearInterval(interval);
-      break;
-  }
+    const wrapper = () => {
+        nextAt += time;
+        timeout = setTimeout(wrapper, nextAt - new Date().getTime());
+        fn();
+    };
 
-  ;
-}, false);
-/******/ })()
-;
+    const cancel = () => clearTimeout(timeout);
+
+    timeout = setTimeout(wrapper, nextAt - new Date().getTime());
+
+    return { cancel };
+};
+
+var timer;
+
+self.addEventListener("message", function (e) {
+    switch (e.data) {
+        case "start":
+            timer = accurateTimer(() => {
+                self.postMessage("tick");
+            });
+            break;
+        case "stop":
+            timer.cancel();
+            break;
+    }
+});
