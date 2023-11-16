@@ -8,7 +8,7 @@ export default class Timer {
         }
         
         if (typeof this.counter == "undefined") {
-            this.counter = new Worker("/js/counter.js");
+            this.counter = new Worker('/js/counter.js');
         }
     }
 

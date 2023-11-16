@@ -1,17 +1,32 @@
-var interval;
-self.addEventListener(
-    "message",
-    function (e) {
-        switch (e.data) {
-            case "start":
-                interval = setInterval(function () {
-                    self.postMessage("tick");
-                }, 1000);
-                break;
-            case "stop":
-                clearInterval(interval);
-                break;
-        }
-    },
-    false
-);
+const accurateTimer = (fn, time = 1000) => {
+    let nextAt, timeout;
+    
+    nextAt = new Date().getTime() + time;
+
+    const wrapper = () => {
+        nextAt += time;
+        timeout = setTimeout(wrapper, nextAt - new Date().getTime());
+        fn();
+    };
+
+    const cancel = () => clearTimeout(timeout);
+
+    timeout = setTimeout(wrapper, nextAt - new Date().getTime());
+
+    return { cancel };
+};
+
+var timer;
+
+self.addEventListener("message", function (e) {
+    switch (e.data) {
+        case "start":
+            timer = accurateTimer(() => {
+                self.postMessage("tick");
+            });
+            break;
+        case "stop":
+            timer.cancel();
+            break;
+    }
+});
