@@ -105,6 +105,7 @@ watch(
                 <span class="text-sky-600 hover:underline cursor-pointer" @click="openProjectEditModal(project)">
                     {{ project.name }}
                 </span>
+                <span class="text-xs block">{{ project.team ? 'Team: ' + project.team.name : '' }}</span>
             </TableCell>
             <TableCell>
                 <span>

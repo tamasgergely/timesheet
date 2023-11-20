@@ -74,7 +74,7 @@ class ProjectController extends Controller
 
     private function getProjects()
     {
-        return Project::with(['client', 'website:id,domain'])
+        return Project::with(['client', 'website:id,domain', 'client.team'])
                       ->filter(request()->only('search'))
                       ->filterByUserRole()
                       ->paginate(10)
@@ -87,6 +87,7 @@ class ProjectController extends Controller
                         'description' => $project->description,
                         'active' => $project->active,
                         'website' => $project->website ?? null,
+                        'team' => $project->client->team ?? ''
                     ]);
     }
 
