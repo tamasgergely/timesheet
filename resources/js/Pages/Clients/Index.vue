@@ -168,8 +168,8 @@ watch(
             <TableHead class="w-16">#</TableHead>
             <TableHead class="w-52">Name</TableHead>
             <TableHead class="w-20">Websites</TableHead>
-            <TableHead class="w-52">Created at</TableHead>
-            <TableHead class="w-52">Updated at</TableHead>
+            <TableHead class="w-32">Created at</TableHead>
+            <TableHead class="w-32">Updated at</TableHead>
             <TableHead class="w-24 text-center">Active</TableHead>
             <TableHead class="w-24 text-center">Action</TableHead>
         </template>
@@ -183,9 +183,10 @@ watch(
                     {{ client.name }}
                 </span>
                 <template v-else>
-                    {{ client.name }} <br>
-                    <span class="text-xs">Created by team mate</span>
+                    {{ client.name }}
+                    <span class="text-xs block">Created by team mate</span>
                 </template>
+                <span class="text-xs block">{{ client.team ? 'Team: ' + client.team.name : '' }}</span>
             </TableCell>
             <TableCell>
                 <div class="flex items-center justify-between" v-for="(website, index) in client.websites">

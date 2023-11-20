@@ -94,7 +94,7 @@ class ClientController extends Controller
     {
         return Client::filter(request()->only('search'))
                      ->filterByUserRole()
-                     ->with('websites:id,client_id,user_id,domain')
+                     ->with('websites:id,client_id,user_id,domain', 'team')
                      ->paginate(10)
                      ->withQueryString()
                      ->through(fn ($client) => [
@@ -105,7 +105,8 @@ class ClientController extends Controller
                         'updated_at' => $client->updated_at,
                         'active' => $client->active,
                         'websites' => $client->websites,
-                        'team_id' => $client->team_id
+                        'team_id' => $client->team_id,
+                        'team' => $client->team
                     ]);
     }
 }
