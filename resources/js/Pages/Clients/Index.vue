@@ -174,56 +174,61 @@ watch(
             <TableHead class="w-24 text-center">Action</TableHead>
         </template>
 
-        <tr v-for="client in clients.data" :key="client.id">
-            <TableCell>{{ client.id }}</TableCell>
-            <TableCell>
-                <span v-if="userHasRights(client.user_id)"
-                      @click="openClientEditModal(client)"
-                      class="text-sky-600 hover:underline cursor-pointer">
-                    {{ client.name }}
-                </span>
-                <template v-else>
-                    {{ client.name }}
-                    <span class="text-xs block">Created by team leader</span>
-                </template>
-                <span class="text-xs block">{{ client.team ? 'Team: ' + client.team.name : '' }}</span>
-            </TableCell>
-            <TableCell>
-                <div class="flex items-center justify-between" v-for="(website, index) in client.websites">
-                    <span :class="index === 0 ? 'font-semibold' : ''">{{ website.domain }}</span>
-                    <div class="flex" v-if="userHasRights(website.user_id)">
-                        <span class="ml-2 cursor-pointer">
-                            <IconEdit width="13px" height="13px" @click="editWebsite(website)" />
-                        </span>
-                        <span class="ml-2 cursor-pointer">
-                            <IconXCircle width="13px" height="13px" @click="destroyWebsite(website)" />
-                        </span>
+        <template v-if="clients.data.length > 0">
+            <tr v-for="client in clients.data" :key="client.id">
+                <TableCell>{{ client.id }}</TableCell>
+                <TableCell>
+                    <span v-if="userHasRights(client.user_id)"
+                        @click="openClientEditModal(client)"
+                        class="text-sky-600 hover:underline cursor-pointer">
+                        {{ client.name }}
+                    </span>
+                    <template v-else>
+                        {{ client.name }}
+                        <span class="text-xs block">Created by team leader</span>
+                    </template>
+                    <span class="text-xs block">{{ client.team ? 'Team: ' + client.team.name : '' }}</span>
+                </TableCell>
+                <TableCell>
+                    <div class="flex items-center justify-between" v-for="(website, index) in client.websites">
+                        <span :class="index === 0 ? 'font-semibold' : ''">{{ website.domain }}</span>
+                        <div class="flex" v-if="userHasRights(website.user_id)">
+                            <span class="ml-2 cursor-pointer">
+                                <IconEdit width="13px" height="13px" @click="editWebsite(website)" />
+                            </span>
+                            <span class="ml-2 cursor-pointer">
+                                <IconXCircle width="13px" height="13px" @click="destroyWebsite(website)" />
+                            </span>
+                        </div>
                     </div>
-                </div>
-                <a v-if="userHasRights(client.user_id)"
-                   href="#"
-                   class="mt-2 text-xs text-sky-600 hover:underline"
-                   @click="addWebsite(client.id)">
-                    Add new website
-                </a>
-            </TableCell>
-            <TableCell>{{ new Date(client.created_at).toLocaleString('hu-hu') }}</TableCell>
-            <TableCell>{{ new Date(client.updated_at).toLocaleString('hu-hu') }}</TableCell>
-            <TableCell>
-                <span class="flex justify-center">
-                    <IconCheckCircle v-if="client.active" />
-                    <IconXCircle v-if="!client.active" />
-                </span>
-            </TableCell>
-            <TableCell>
-                <div class="inline-flex justify-center relative w-full"
-                     v-if="userHasRights(client.user_id)">
-                    <ActionPopup :items="clients.data"
-                                 :item="client" 
-                                 type="clients" 
-                                 @clickOnEdit="openClientEditModal(client)" />
-                </div>
-            </TableCell>
+                    <a v-if="userHasRights(client.user_id)"
+                    href="#"
+                    class="mt-2 text-xs text-sky-600 hover:underline"
+                    @click="addWebsite(client.id)">
+                        Add new website
+                    </a>
+                </TableCell>
+                <TableCell>{{ new Date(client.created_at).toLocaleString('hu-hu') }}</TableCell>
+                <TableCell>{{ new Date(client.updated_at).toLocaleString('hu-hu') }}</TableCell>
+                <TableCell>
+                    <span class="flex justify-center">
+                        <IconCheckCircle v-if="client.active" />
+                        <IconXCircle v-if="!client.active" />
+                    </span>
+                </TableCell>
+                <TableCell>
+                    <div class="inline-flex justify-center relative w-full"
+                        v-if="userHasRights(client.user_id)">
+                        <ActionPopup :items="clients.data"
+                                    :item="client" 
+                                    type="clients" 
+                                    @clickOnEdit="openClientEditModal(client)" />
+                    </div>
+                </TableCell>
+            </tr>
+        </template>
+        <tr v-else>
+            <TableCell colspan="8" class="text-center py-10">No clients!</TableCell>
         </tr>
     </Table>
 

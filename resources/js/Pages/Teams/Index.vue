@@ -99,34 +99,39 @@ const authUser = computed(() => page.props.auth.user);
             <TableHead class="w-24 text-center">Action</TableHead>
         </template>
 
-        <tr v-for="team in teams.data" :key="team.id">
-            <TableCell>{{ team.id }}</TableCell>
-            <TableCell>
-                <span class="text-sky-600 hover:underline cursor-pointer" @click="openTeamEditModal(team)">
-                    {{ team.name }}
-                </span>
-            </TableCell>
-            <TableCell>
-                <span>
-                    {{ team.user.name }}
-                </span>
-            </TableCell>
-            <TableCell>
-                <template v-for="(user, index) in team.users" :key="user.id">
-                    <span>{{ user.name }}</span>
-                    <span v-if="index !== team.users.length - 1">, </span>
-                </template>
-            </TableCell>
-            <TableCell>{{ new Date(team.created_at).toLocaleString('hu-hu') }}</TableCell>
-            <TableCell>{{ new Date(team.updated_at).toLocaleString('hu-hu') }}</TableCell>
-            <TableCell>
-                <div class="inline-flex justify-center relative w-full">
-                    <ActionPopup :items="teams.data"
-                                 :item="team" 
-                                 type="teams" 
-                                 @clickOnEdit="openTeamEditModal(team)" />
-                </div>
-            </TableCell>
+        <template v-if="teams.data.length > 0">
+            <tr v-for="team in teams.data" :key="team.id">
+                <TableCell>{{ team.id }}</TableCell>
+                <TableCell>
+                    <span class="text-sky-600 hover:underline cursor-pointer" @click="openTeamEditModal(team)">
+                        {{ team.name }}
+                    </span>
+                </TableCell>
+                <TableCell>
+                    <span>
+                        {{ team.user.name }}
+                    </span>
+                </TableCell>
+                <TableCell>
+                    <template v-for="(user, index) in team.users" :key="user.id">
+                        <span>{{ user.name }}</span>
+                        <span v-if="index !== team.users.length - 1">, </span>
+                    </template>
+                </TableCell>
+                <TableCell>{{ new Date(team.created_at).toLocaleString('hu-hu') }}</TableCell>
+                <TableCell>{{ new Date(team.updated_at).toLocaleString('hu-hu') }}</TableCell>
+                <TableCell>
+                    <div class="inline-flex justify-center relative w-full">
+                        <ActionPopup :items="teams.data"
+                                    :item="team" 
+                                    type="teams" 
+                                    @clickOnEdit="openTeamEditModal(team)" />
+                    </div>
+                </TableCell>
+            </tr>
+        </template>
+        <tr v-else>
+            <TableCell colspan="8" class="text-center py-10">No teams!</TableCell>
         </tr>
     </Table>
 

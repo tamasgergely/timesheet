@@ -113,48 +113,53 @@ const userHasRights = (id) => {
             <TableHead class="w-24 text-center">Action</TableHead>
         </template>
 
-        <tr v-for="project in projects.data" :key="project.id">
-            <TableCell>{{ project.id }}</TableCell>
-            <TableCell>
-                <span class="text-sky-600 hover:underline cursor-pointer" 
-                      @click="openProjectEditModal(project)"
-                      v-if="userHasRights(project.user_id)">
-                    {{ project.name }}
-                </span>
-                <template v-else>
-                    {{ project.name }}
-                    <span class="text-xs block">Created by team leader</span>
-                </template>
-                <span class="text-xs block">{{ project.team ? 'Team: ' + project.team.name : '' }}</span>
-            </TableCell>
-            <TableCell>
-                <span>
-                    {{ project.client_name }}
-                </span>
-            </TableCell>
-            <TableCell>
-                <a :href="project.website.domain" target="_blank" class="text-sky-600 hover:underline"
-                   v-if="project.website">
-                    {{ project.website.domain }}
-                </a>
-            </TableCell>
+        <template v-if="projects.data.length > 0">
+            <tr v-for="project in projects.data" :key="project.id">
+                <TableCell>{{ project.id }}</TableCell>
+                <TableCell>
+                    <span class="text-sky-600 hover:underline cursor-pointer" 
+                        @click="openProjectEditModal(project)"
+                        v-if="userHasRights(project.user_id)">
+                        {{ project.name }}
+                    </span>
+                    <template v-else>
+                        {{ project.name }}
+                        <span class="text-xs block">Created by team leader</span>
+                    </template>
+                    <span class="text-xs block">{{ project.team ? 'Team: ' + project.team.name : '' }}</span>
+                </TableCell>
+                <TableCell>
+                    <span>
+                        {{ project.client_name }}
+                    </span>
+                </TableCell>
+                <TableCell>
+                    <a :href="project.website.domain" target="_blank" class="text-sky-600 hover:underline"
+                    v-if="project.website">
+                        {{ project.website.domain }}
+                    </a>
+                </TableCell>
 
-            <TableCell>{{ project.description }}</TableCell>
-            <TableCell>
-                <span class="flex justify-center">
-                    <IconCheckCircle v-if="project.active" />
-                    <IconXCircle v-if="!project.active" />
-                </span>
-            </TableCell>
-            <TableCell>
-                <div class="inline-flex justify-center relative w-full"
-                     v-if="userHasRights(project.user_id)">
-                    <ActionPopup :items="projects.data"
-                                 :item="project"
-                                 type="projects"
-                                 @clickOnEdit="openProjectEditModal(project)" />
-                </div>
-            </TableCell>
+                <TableCell>{{ project.description }}</TableCell>
+                <TableCell>
+                    <span class="flex justify-center">
+                        <IconCheckCircle v-if="project.active" />
+                        <IconXCircle v-if="!project.active" />
+                    </span>
+                </TableCell>
+                <TableCell>
+                    <div class="inline-flex justify-center relative w-full"
+                        v-if="userHasRights(project.user_id)">
+                        <ActionPopup :items="projects.data"
+                                    :item="project"
+                                    type="projects"
+                                    @clickOnEdit="openProjectEditModal(project)" />
+                    </div>
+                </TableCell>
+            </tr>
+        </template>
+        <tr v-else>
+            <TableCell colspan="8" class="text-center py-10">No projects!</TableCell>
         </tr>
     </Table>
 
