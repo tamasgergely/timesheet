@@ -1,6 +1,6 @@
 <script setup>
-import { inject, ref, watch } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { inject, ref, watch, computed } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
 import Form from '@/Shared/Input/Form.vue';
 import InputText from '@/Shared/Input/Text.vue'
 import InputCheckbox from '@/Shared/Input/Checkbox.vue'
@@ -51,6 +51,9 @@ watch(
         form.team_id = client.team_id;
     }
 )
+
+const currentPage = usePage();
+const authUser = computed(() => currentPage.props.auth.user);
 </script>
 
 <template>
@@ -61,7 +64,7 @@ watch(
                    :error="errors.name"
                    autocomplete="off" />
 
-        <Select v-if="props.teams.length"
+        <Select v-if="authUser.role !== 'User' && props.teams.length"
                 v-model="form.team_id"
                 :error="errors.team_id"
                 @change="showTeamChangeInfoText($event)"

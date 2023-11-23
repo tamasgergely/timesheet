@@ -9,6 +9,8 @@ class Role extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     public const ADMIN = 1;
 
     public const TEAM_LEADER = 2;

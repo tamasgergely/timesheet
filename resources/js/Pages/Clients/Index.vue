@@ -184,7 +184,7 @@ watch(
                 </span>
                 <template v-else>
                     {{ client.name }}
-                    <span class="text-xs block">Created by team mate</span>
+                    <span class="text-xs block">Created by team leader</span>
                 </template>
                 <span class="text-xs block">{{ client.team ? 'Team: ' + client.team.name : '' }}</span>
             </TableCell>
@@ -200,7 +200,8 @@ watch(
                         </span>
                     </div>
                 </div>
-                <a href="#"
+                <a v-if="userHasRights(client.user_id)"
+                   href="#"
                    class="mt-2 text-xs text-sky-600 hover:underline"
                    @click="addWebsite(client.id)">
                     Add new website

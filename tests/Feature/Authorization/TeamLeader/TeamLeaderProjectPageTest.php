@@ -48,7 +48,7 @@ class TeamLeaderProjectPageTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_team_leader_only_sees_own_clients_projects_and_own_teammates_projects()
+    public function test_team_leader_only_sees_own_clients_projects()
     {
         // Own clients projects
         Project::factory()
@@ -58,21 +58,6 @@ class TeamLeaderProjectPageTest extends TestCase
                     'name' => 'Own project'
                 ]);
 
-        // Temmates project
-        $teamMate = User::factory()->create();
-        $teamMate->teams()->attach($this->team->id);
-
-        $project = Project::factory()
-                ->for(Client::factory()
-                    ->state([
-                        'user_id' => $teamMate->id,
-                        'team_id' => $this->team->id
-                    ]))
-                ->create([
-                    'user_id' => $teamMate->id,
-                    'name' => 'Teammates project'
-                ]);
-        
         // Other project
         $user = User::factory()->create();
         Project::factory()
@@ -86,9 +71,8 @@ class TeamLeaderProjectPageTest extends TestCase
 
         $response->assertInertia(function (Assert $page) {
             $page->component('Projects/Index')
-                 ->has('projects.data', 2)
-                 ->where('projects.data.0.name', 'Own project')
-                 ->where('projects.data.1.name', 'Teammates project');
+                 ->has('projects.data', 1)
+                 ->where('projects.data.0.name', 'Own project');
         });
     }
 
@@ -103,29 +87,6 @@ class TeamLeaderProjectPageTest extends TestCase
     {
 
         $client = Client::factory()->create(['user_id' => $this->user->id]);
-
-        $response = $this->actingAs($this->user)->post('/projects', [
-            'client' => $client->id,
-            'description' => 'Test project description',
-            'name' => 'Test project',
-            'active' => 1
-        ]);
-
-        $this->assertDatabaseHas('projects', [
-            'client_id' => $client->id,
-            'description' => 'Test project description',
-            'name' => 'Test project',
-            'active' => 1
-        ]);
-
-        $response->assertStatus(302);
-        $response->assertRedirect('/projects');
-        $response->assertSessionHas('success');
-    }
-
-    public function test_team_leader_can_create_new_project_for_teammates_client()
-    {
-        $client = Client::factory()->create(['team_id' => $this->team->id]);
 
         $response = $this->actingAs($this->user)->post('/projects', [
             'client' => $client->id,
@@ -165,40 +126,6 @@ class TeamLeaderProjectPageTest extends TestCase
             ->for(Client::factory()->state(['user_id' => $this->user->id]))
             ->has(Timer::factory()->count(1))
             ->create(['user_id' => $this->user->id]);
-
-        $timers = $project->timers;
-
-        $response = $this->actingAs($this->user)->delete('/projects/' . $project->id,[],[
-                'http_referer' => '/projects'
-            ]
-        );
-
-        $project = $project->fresh();
-
-        $this->assertTrue($project->trashed());
-
-        foreach ($timers as $timer) {
-            $timer = $timer->fresh();
-            $this->assertTrue($timer->trashed());
-        };
-
-        $response->assertSessionHas('success');
-        $response->assertStatus(302);
-        $response->assertRedirect('/projects');
-    }
-
-    public function test_team_leader_can_delete_teammates_project()
-    {
-        $teamMate = User::factory()->create();
-        $teamMate->teams()->attach($this->team->id);
-
-        $project = Project::factory()
-            ->for(Client::factory()->state([
-                'user_id' => $teamMate->id,
-                'team_id' => $this->team->id
-                ]))
-            ->has(Timer::factory()->count(1))
-            ->create(['user_id' => $teamMate]);
 
         $timers = $project->timers;
 

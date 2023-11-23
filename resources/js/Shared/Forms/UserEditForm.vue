@@ -78,7 +78,6 @@ watch(
 </script>
 
 <template>
-    {{ props.errors }}
     <Form @submit.prevent="update">
         <div>
             <label class="text-base font-bold text-accent-secondary lg:text-1xl flex flex-col">

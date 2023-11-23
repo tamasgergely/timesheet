@@ -1,5 +1,6 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
 import Form from '@/Shared/Input/Form.vue';
 import InputText from '@/Shared/Input/Text.vue'
 import InputCheckbox from '@/Shared/Input/Checkbox.vue'
@@ -13,10 +14,13 @@ const props = defineProps({
 
 const form = useForm({
     name: '',
-    website: '',
+    domain: '',
     active: true,
     team_id: ''
 });
+
+const currentPage = usePage();
+const authUser = computed(() => currentPage.props.auth.user);
 </script>
 
 <template>
@@ -37,7 +41,8 @@ const form = useForm({
                    labelClass="flex items-center w-60"
                    :error="errors.domain" />
 
-        <Select v-model="form.team_id"
+        <Select v-if="authUser.role !== 'User'"
+                v-model="form.team_id"
                 :error="errors.team_id"
                 class="flex justify-between gap-10"
                 label="Team"

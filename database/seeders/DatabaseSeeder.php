@@ -16,11 +16,16 @@ class DatabaseSeeder extends Seeder
     {
         // \App\Models\User::factory(10)->create();
 
+        \App\Models\Role::create(['name' => 'Administrator']);
+        \App\Models\Role::create(['name' => 'Team Leader']);
+        \App\Models\Role::create(['name' => 'User']);
+
         \App\Models\User::create([
             'name' => 'Admin',
             'email' => 'admin@admin.com',
             'password' => Hash::make('password'),
-            'email_verified_at' => '2023-07-10 12:07:43'
+            'email_verified_at' => '2023-07-10 12:07:43',
+            'role_id' => 1
         ]);
     }
 }

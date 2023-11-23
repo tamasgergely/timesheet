@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\Client;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -81,6 +82,7 @@ class ProjectController extends Controller
                       ->withQueryString()
                       ->through(fn ($project) => [
                         'id' => $project->id,
+                        'user_id' => $project->user_id,
                         'name' => $project->name,
                         'client_id' => $project->client->id,
                         'client_name' => $project->client->name ?? '',
@@ -94,8 +96,18 @@ class ProjectController extends Controller
     private function getClients()
     {
         return Client::select('id', 'name')
-                ->with('websites:id,domain,client_id')
-                ->filterByUserRole()
-                ->get();
+            ->with('websites:id,domain,client_id')
+            
+            // User
+            ->when(Auth::user()->role_id === Role::USER, function ($query) {
+                $query->where('user_id', Auth::id());
+        
+            // Team leader
+            })->when(Auth::user()->role_id === Role::TEAM_LEADER, function ($query) {
+                $query->where(function ($query) {
+                    $query->whereIn('team_id', Auth::user()->getTeamIdsForLeader());
+                    $query->orWhere('user_id', Auth::id());
+                });
+            })->get();
     }
 }

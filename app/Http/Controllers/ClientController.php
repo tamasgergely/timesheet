@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 
+use function Symfony\Component\String\b;
+
 class ClientController extends Controller
 {
     public function index(Request $request)
@@ -18,7 +20,7 @@ class ClientController extends Controller
             'clients' => $this->getClients(),
             'keyword' => $request->search,
             'teams' => Auth::user()->role_id === Role::ADMIN ? Team::all() 
-                        : Auth::user()->teams->transform(fn ($team) => [
+                        : Auth::user()->ledTeams->transform(fn ($team) => [
                 'id' => $team->id,
                 'name' => $team->name
             ])
@@ -29,7 +31,7 @@ class ClientController extends Controller
     {
         return inertia('Clients/Create', [
             'teams' => Auth::user()->role_id === Role::ADMIN ? Team::all() 
-                        : Auth::user()->teams->transform(fn ($team) => [
+                        : Auth::user()->ledTeams->transform(fn ($team) => [
                 'id' => $team->id,
                 'name' => $team->name
             ])
@@ -42,7 +44,7 @@ class ClientController extends Controller
             'name' => $request->name,
             'active' => $request->active,
             'user_id' => Auth::id(),
-            'team_id' => $request->team_id
+            'team_id' => Auth::user()->role_id !== Role::USER ? $request->team_id : null
         ]);
 
         if ($request->domain){
@@ -62,7 +64,7 @@ class ClientController extends Controller
 
         $client->name = $request->name;
         $client->active = $request->active;
-        $client->team_id = $request->team_id;
+        $client->team_id = Auth::user()->role_id !== Role::USER ? $request->team_id : null;
 
         $client->save();
     

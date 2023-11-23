@@ -43,7 +43,7 @@ class UserClientPageTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_user_only_sees_own_clients_and_teammate_clients()
+    public function test_user_only_sees_own_clients_and_own_teams_clients()
     {
         // User's client
         Client::factory()->create([
@@ -51,10 +51,10 @@ class UserClientPageTest extends TestCase
             'user_id' => $this->user->id
         ]);
 
-        // Temmate's client
+        // Team's client
         Client::factory()->create([
             'name' => 'Team client',
-            'user_id' => User::factory()->create(),
+            'user_id' => User::factory(['role_id' => 2])->create(),
             'team_id' => $this->team->id
         ]);
 
@@ -84,7 +84,6 @@ class UserClientPageTest extends TestCase
             'name' => 'Test client',
             'domain' => 'http://www.test.com',
             'active' => 1,
-            'team_id' => $this->team->id
         ]);
 
         $this->assertDatabaseCount('clients', 1);
@@ -93,7 +92,6 @@ class UserClientPageTest extends TestCase
             'user_id' => $this->user->id,
             'name' => 'Test client',
             'active' => 1,
-            'team_id' => $this->team->id
         ]);
 
         $this->assertDatabaseHas('websites', [
@@ -110,8 +108,7 @@ class UserClientPageTest extends TestCase
     {
         $response = $this->actingAs($this->user)->post('/clients', [
             'name' => 'Test client',
-            'active' => 1,
-            'team_id' => $this->team->id
+            'active' => 1
         ]);
 
         $this->assertDatabaseCount('clients', 1);
@@ -119,8 +116,7 @@ class UserClientPageTest extends TestCase
         $this->assertDatabaseHas('clients', [
             'user_id' => $this->user->id,
             'name' => 'Test client',
-            'active' => 1,
-            'team_id' => $this->team->id
+            'active' => 1
         ]);
 
         $response->assertSessionHas('success');
@@ -135,8 +131,7 @@ class UserClientPageTest extends TestCase
 
         $response = $this->actingAs($this->user)->put('/clients/' . $client->id, [
             'name' => 'Test client',
-            'active' => 1,
-            'team_id' => ''
+            'active' => 1
         ]);
 
         $response->assertStatus(403);
@@ -144,12 +139,12 @@ class UserClientPageTest extends TestCase
 
     public function test_user_can_not_update_teammates_client()
     {
-        $client = Client::factory()->create(['team_id' => $this->team->id]);
+        $client = Client::factory(['user_id' => User::factory(['role_id' => 2])])
+                        ->create(['team_id' => $this->team->id]);
 
         $response = $this->actingAs($this->user)->put('/clients/' . $client->id, [
             'name' => 'Test client',
-            'active' => 1,
-            'team_id' => ''
+            'active' => 1
         ]);
 
         $response->assertStatus(403);
@@ -163,8 +158,7 @@ class UserClientPageTest extends TestCase
 
         $response = $this->actingAs($this->user)->put('/clients/' . $client->id, [
             'name' => 'Test client',
-            'active' => 1,
-            'team_id' => ''
+            'active' => 1
         ]);
 
         $this->assertDatabaseHas('clients', [
@@ -179,10 +173,11 @@ class UserClientPageTest extends TestCase
         $response->assertSessionHas('success');
     }
 
-    public function test_user_can_not_delete_teammates_client()
+    public function test_user_can_not_delete_teams_client()
     {
-        // Temmate's client
-        $client = Client::factory()->create(['team_id' => $this->team->id]);
+        // Teams's client
+        $client = Client::factory(['user_id' => User::factory(['role_id' => 2])])
+                        ->create(['team_id' => $this->team->id]);
 
         $response = $this->actingAs($this->user)->delete('/clients/' . $client->id);
 
@@ -198,7 +193,7 @@ class UserClientPageTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_user_can_delete_own_client_if_client_not_in_team()
+    public function test_user_can_delete_own_client()
     {
         $client = Client::factory(['user_id' => $this->user->id])
                         ->has(Website::factory()->count(2))
@@ -229,44 +224,9 @@ class UserClientPageTest extends TestCase
         $response->assertSessionHas('success');
     }
 
-    public function test_user_can_not_delete_own_client_if_client_is_in_team()
-    {
-        $client = Client::factory()
-                        ->has(Website::factory()->count(2))
-                        ->has(Project::factory()->count(2))
-                        ->create([
-                            'user_id' => $this->user->id,
-                            'team_id' => $this->team->id
-                        ]);
-
-        $response = $this->actingAs($this->user)->delete('/clients/' . $client->id);
-
-        $response->assertStatus(403);
-    }
-
     public function test_user_can_create_a_website_for_own_client()
     {
         $client = Client::factory()->create(['user_id' => $this->user->id]);
-
-        $response = $this->actingAs($this->user)->post('/websites', [
-            'domain' => 'http://www.test.com',
-            'client_id' => $client->id
-        ]);
-
-        $this->assertDatabaseHas('websites', [
-            'domain' => 'http://www.test.com',
-            'client_id' => $client->id,
-            'user_id' => $this->user->id
-        ]);
-
-        $response->assertSessionHas('success');
-        $response->assertStatus(302);
-        $response->assertRedirect('/clients');
-    }
-
-    public function test_user_can_create_a_website_for_teammates_client()
-    {
-        $client = Client::factory()->create(['team_id' => $this->team->id]);
 
         $response = $this->actingAs($this->user)->post('/websites', [
             'domain' => 'http://www.test.com',
@@ -325,7 +285,7 @@ class UserClientPageTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_user_can_delete_own_website_if_website_not_belongs_to_team()
+    public function test_user_can_delete_own_website()
     {
         $website = Website::factory()
                         ->has(Project::factory()
@@ -363,20 +323,6 @@ class UserClientPageTest extends TestCase
         $response->assertSessionHas('success');
         $response->assertStatus(302);
         $response->assertRedirect('/clients');
-    }
-
-    public function test_user_can_not_delete_own_website_if_website_belongs_to_team()
-    {
-        $website = Website::factory()
-                        ->for(Client::factory()->state(['team_id' => $this->team->id]))
-                        ->create([
-                            'user_id' => $this->user->id,
-                            'domain' => 'http://www.test.com'
-                        ]);
-
-        $response = $this->actingAs($this->user)->delete('/websites/' . $website->id);
-
-        $response->assertStatus(403);
     }
 
     public function test_user_can_not_delete_website_created_by_another_user()

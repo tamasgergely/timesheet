@@ -119,9 +119,10 @@ class UserProjectPageTest extends TestCase
         $response->assertSessionHas('success');
     }
 
-    public function test_user_can_create_new_project_for_teammates_client()
+    public function test_user_can_not_create_new_project_for_teams_client()
     {
-        $client = Client::factory()->create(['team_id' => $this->team->id]);
+        $client = Client::factory(['user_id' => User::factory(['role_id' => 2])])
+                        ->create(['team_id' => $this->team->id]);
 
         $response = $this->actingAs($this->user)->post('/projects', [
             'client' => $client->id,
@@ -130,16 +131,7 @@ class UserProjectPageTest extends TestCase
             'active' => 1
         ]);
 
-        $this->assertDatabaseHas('projects', [
-            'client_id' => $client->id,
-            'description' => 'Test project description',
-            'name' => 'Test project',
-            'active' => 1
-        ]);
-
-        $response->assertStatus(302);
-        $response->assertRedirect('/projects');
-        $response->assertSessionHas('success');
+        $response->assertStatus(403);
     }
 
     public function test_user_can_not_create_new_project_for_another_users_client()
@@ -204,7 +196,7 @@ class UserProjectPageTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_user_can_delete_own_project_if_project_not_team_project()
+    public function test_user_can_delete_own_project()
     {
         $project = Project::factory()
             ->for(Client::factory()->state(['user_id' => $this->user->id]))
@@ -232,15 +224,17 @@ class UserProjectPageTest extends TestCase
         $response->assertRedirect('/projects');
     }
 
-    public function test_user_can_not_delete_own_project_if_project_is_team_project()
+    public function test_user_can_not_delete_teams_project()
     {
+        $user = User::factory(['role_id' => 2])->create();
+
         $project = Project::factory()
             ->for(Client::factory()->state([
-                'user_id' => $this->user->id,
+                'user_id' => $user->id,
                 'team_id' => $this->team->id
                 ]))
             ->has(Timer::factory()->count(1))
-            ->create(['user_id' => $this->user->id]);
+            ->create(['user_id' => $user->id]);
 
         $response = $this->actingAs($this->user)->delete('/projects/' . $project->id);
 

@@ -1,5 +1,5 @@
 <script setup>
-import { router, Link } from '@inertiajs/vue3';
+import { router, Link, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch, provide } from 'vue';
 import Layout from '@/Shared/Layout.vue';
 import '@vuepic/vue-datepicker/dist/main.css';
@@ -68,6 +68,20 @@ watch(
         formErrors.value = errors;
     }
 )
+
+const page = usePage();
+
+const authUser = computed(() => {
+    return page.props.auth.user;
+});
+
+const userHasRights = (id) => {
+    if (authUser.value.role === 'User') {
+        return authUser.value.id === id;
+    }
+
+    return true;
+}
 </script>
         
 <template>
@@ -102,9 +116,15 @@ watch(
         <tr v-for="project in projects.data" :key="project.id">
             <TableCell>{{ project.id }}</TableCell>
             <TableCell>
-                <span class="text-sky-600 hover:underline cursor-pointer" @click="openProjectEditModal(project)">
+                <span class="text-sky-600 hover:underline cursor-pointer" 
+                      @click="openProjectEditModal(project)"
+                      v-if="userHasRights(project.user_id)">
                     {{ project.name }}
                 </span>
+                <template v-else>
+                    {{ project.name }}
+                    <span class="text-xs block">Created by team leader</span>
+                </template>
                 <span class="text-xs block">{{ project.team ? 'Team: ' + project.team.name : '' }}</span>
             </TableCell>
             <TableCell>
@@ -127,7 +147,8 @@ watch(
                 </span>
             </TableCell>
             <TableCell>
-                <div class="inline-flex justify-center relative w-full">
+                <div class="inline-flex justify-center relative w-full"
+                     v-if="userHasRights(project.user_id)">
                     <ActionPopup :items="projects.data"
                                  :item="project"
                                  type="projects"

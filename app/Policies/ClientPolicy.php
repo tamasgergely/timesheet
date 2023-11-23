@@ -26,15 +26,7 @@ class ClientPolicy
      */
     public function update(User $user, Client $client): bool
     {
-        if ($user->role_id === Role::USER and $user->id !== $client->user_id) {
-            return false;
-        }
-
-        if ($user->role_id === Role::TEAM_LEADER and $user->id !== $client->user_id and !in_array($client->team_id, Auth::user()->getTeamIdsForLeader())) {
-            return false;
-        }
-
-        return true;
+        return $user->id === $client->user_id;
     }
 
     /**
@@ -42,14 +34,6 @@ class ClientPolicy
      */
     public function delete(User $user, Client $client): bool
     {
-        if ($user->role_id === Role::USER and ($user->id !== $client->user_id or !is_null($client->team_id)) ) {
-            return false;
-        }
-
-        if ($user->role_id === Role::TEAM_LEADER and $user->id !== $client->user_id and !in_array($client->team_id, Auth::user()->getTeamIdsForLeader())) {
-            return false;
-        }
- 
-        return true;
+        return $user->id === $client->user_id;
     }
 }
