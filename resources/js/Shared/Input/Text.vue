@@ -22,7 +22,7 @@ defineProps({
                class="block font-semibold text-sm text-gray-700 mb-2"
                :class="labelClass"
                :for="id">
-            {{ label }}:
+            {{ label }}
         </label>
 
         <input :id="id"

@@ -18,6 +18,7 @@ class EmailVerificationTest extends TestCase
     {
         $user = User::factory()->create([
             'email_verified_at' => null,
+            'role_id' => 3
         ]);
 
         $response = $this->actingAs($user)->get('/verify-email');
@@ -29,7 +30,9 @@ class EmailVerificationTest extends TestCase
     {
         $user = User::factory()->create([
             'email_verified_at' => null,
+            'role_id' => 3
         ]);
+
 
         Event::fake();
 

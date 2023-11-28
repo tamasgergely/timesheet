@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\Timer;
 use App\Models\Client;
-use Illuminate\Http\Request;
 use App\Http\Requests\TimerRequest;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 class TimerController extends Controller
 {

@@ -32,13 +32,9 @@ import { usePage } from '@inertiajs/vue3';
 import IconError from './Svg/IconError.vue';
 import IconSuccess from './Svg/IconSuccess.vue';
 
-const props = defineProps({
-    page: Object
-})
-
+const page = usePage();
 let show = ref(false);
 let timeoutId = ref();
-const page = usePage();
 
 watch(
     () => page.props,
@@ -50,6 +46,6 @@ watch(
             page.props.flash.success = null;
             page.props.flash.error = null;
         }, 3000)
-    },{ deep: true }
+    },{ deep: true, immediate: true }
 )
 </script>

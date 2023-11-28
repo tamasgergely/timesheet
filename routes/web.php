@@ -12,7 +12,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\ProjectReportController;
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('timer', TimerController::class)->only(['store', 'update', 'destroy']);
 
     Route::get('/dashboard', [TimerController::class, 'index'])
