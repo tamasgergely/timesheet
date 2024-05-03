@@ -69,34 +69,36 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function isTeamMember(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->teams()->count() > 0
+            get: fn () => $this->teams()->count() > 0
         );
     }
 
     protected function isAdmin(): Attribute
     {
         return Attribute::make(
-            get: fn($value, array $attributes) => $attributes['role_id'] === Role::ADMIN
+            get: fn ($value, array $attributes) => $attributes['role_id'] === Role::ADMIN
         );
     }
 
     public function scopeFilter($query, array $filters)
     {
         $query->when($filters['search'] ?? null, function ($query, $search) {
-            $query->where(function($query) use ($search){
+            $query->where(function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%');
                 $query->orWhere('email', 'like', '%' . $search . '%');
             });
         
-        })->when(Auth::user()->role_id === Role::USER or Auth::user()->role_id === Role::TEAM_LEADER, function ($query){
+        })->when(Auth::user()->role_id === Role::USER or Auth::user()->role_id === Role::TEAM_LEADER, function ($query) {
             $query->where('id', Auth::id());
         });
     }
 
     /**
-     * Which teams the team leader leads
+     * Get an array of team IDs led by the current user. 
+     *
+     * @return array The array of team IDs led by the user.
      */
-    public function getTeamIdsForLeader()
+    public function getTeamIdsForLeader(): Array
     {
         return $this->ledTeams->pluck('id')->toArray();
     }

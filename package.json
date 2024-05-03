@@ -22,8 +22,14 @@
     "dependencies": {
         "@inertiajs/vue3": "^1.0.9",
         "@vuepic/vue-datepicker": "^3.5.2",
+        "apexcharts": "^3.44.1",
+        "d3": "^7.8.5",
+        "d3-cloud": "^1.2.7",
+        "d3-sankey": "^0.12.3",
         "sweetalert2": "^11.7.12",
         "vue": "^3.2.41",
-        "vue-multiselect": "^3.0.0-beta.2"
+        "vue-multiselect": "^3.0.0-beta.2",
+        "vue3-apexcharts": "^1.4.4",
+        "vuesalize": "^2.1.8"
     }
 }

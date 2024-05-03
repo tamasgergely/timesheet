@@ -7,7 +7,7 @@ import Button from '@/Shared/Input/Button.vue';
 import InputSelect from '@/Shared/Input/Select.vue';
 import InputTextArea from '@/Shared/Input/TextArea.vue';
 import IconFullScreen from '@/Shared/Svg/IconFullScreen.vue';
-import Timer from '../timer.js';
+import Timer from '../../timer.js';
 import { useTimeStamp } from '@/Composables/useTimeStamp.js'
 import Swal from 'sweetalert2';
 

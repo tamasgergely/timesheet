@@ -1,6 +1,7 @@
 <script setup>
 import { usePage } from '@inertiajs/vue3';
 import NavLink from './NavLink.vue';
+import IconDashboard from '@/Shared/Svg/IconDashboard.vue';
 import IconTimer from '@/Shared/Svg/IconTimer.vue';
 import IconClients from '@/Shared/Svg/IconClients.vue';
 import IconProjects from '@/Shared/Svg/IconProjects.vue';
@@ -17,12 +18,18 @@ const page = usePage();
 
 <template>
     <ul>
-        <NavLink href="/" :active="page.component === 'Dashboard'">
+        <NavLink href="/" :active="page.component === 'Dashboard/Index'">
+            <template #icon>
+                <IconDashboard />
+            </template>
+            Dashboard
+        </NavLink>
+
+        <NavLink href="/timers" :active="page.component === 'Timers/Index'">
             <template #icon>
                 <IconTimer />
             </template>
             Timers
-
         </NavLink>
 
         <NavLink href="/clients" :active="page.component === 'Clients/Index'">

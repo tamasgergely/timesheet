@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Carbon\CarbonInterval;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TimeInterval extends Model
 {
@@ -13,30 +14,40 @@ class TimeInterval extends Model
 
     protected $guarded = [];
 
+    public function timer(): BelongsTo{
+        return $this->belongsTo(Timer::class);
+    }
+
     public function getTimeAttribute()
     {
         $now = Carbon::now();
         $start = Carbon::parse($this->start);
 
-        if ($this->stop){
+        if ($this->stop) {
             $stop = Carbon::parse($this->stop);
             $seconds = $stop->diffInSeconds($start);
-        }else{
+        } else {
             $seconds = $now->diffInSeconds($start);
         }
 
         return CarbonInterval::seconds($seconds)->cascade();
     }
 
-    public function getTimeIntervalInSeconds()
+    /**
+     * Calculate and return the time interval in seconds between 
+     * the start time and end time (if available) for the current instance.
+     *
+     * @return int The time interval in seconds.
+     */
+    public function getTimeIntervalInSeconds(): Int
     {
         $now = Carbon::now();
         $start = Carbon::parse($this->start);
 
-        if ($this->stop){
+        if ($this->stop) {
             $stop = Carbon::parse($this->stop);
             $seconds = $stop->diffInSeconds($start);
-        }else{
+        } else {
             $seconds = $now->diffInSeconds($start);
         }
 

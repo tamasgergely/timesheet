@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\CountForCurrentUser;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,6 +12,7 @@ class Project extends Model
 {
     use HasFactory;
     use SoftDeletes;
+    use CountForCurrentUser;
 
     protected $guarded = [];
 
@@ -44,27 +46,34 @@ class Project extends Model
         });
     }
 
+    /**
+     * Scope a query to filter records based on the authenticated user's role.
+     *
+     * - For regular users who are team members, it filters records associated with their teams or themselves.
+     * - For regular users who are not team members, it filters records associated only with themselves.
+     * - For team leaders, it filters records associated with their teams or themselves.
+     */
     public function scopeFilterByUserRole($query)
     {
         $user = Auth::user();
 
         // Regular user, team member
-        $query->when($user->role_id === Role::USER and $user->isTeamMember, function ($query) use ($user){
-            $query->where(function ($query) use ($user){
+        $query->when($user->role_id === Role::USER and $user->isTeamMember, function ($query) use ($user) {
+            $query->where(function ($query) use ($user) {
                 $query->orWhere('user_id', Auth::id());
-                $query->orWhereHas('client', function ($query) use ($user){
+                $query->orWhereHas('client', function ($query) use ($user) {
                     $query->whereIn('team_id', $user->teams->pluck('id'));
                 });
             });
 
-        // Regular user, not team member
+            // Regular user, not team member
         })->when($user->role_id === Role::USER and !$user->isTeamMember, function ($query) {
             $query->where('user_id', Auth::id());
     
-        // Team leader
+            // Team leader
         })->when($user->role_id === Role::TEAM_LEADER, function ($query) {
             $query->where(function ($query) {
-                $query->orWhereHas('client', function ($query){
+                $query->orWhereHas('client', function ($query) {
                     $query->whereIn('team_id', Auth::user()->getTeamIdsForLeader());
                 });
 

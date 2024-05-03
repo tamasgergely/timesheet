@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TimerController;
 use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
@@ -13,10 +14,11 @@ use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\ProjectReportController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('timer', TimerController::class)->only(['store', 'update', 'destroy']);
 
-    Route::get('/dashboard', [TimerController::class, 'index'])
+    Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
+    Route::resource('timers', TimerController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::resource('clients', ClientController::class)->except(['show', 'edit']);
 

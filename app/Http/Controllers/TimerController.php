@@ -47,7 +47,7 @@ class TimerController extends Controller
              ];
         });
 
-        return inertia('Dashboard', [
+        return inertia('Timers/Index', [
             'initalTimers' => $timers,
             'clients' => $this->getClients(),
         ]);

@@ -2,29 +2,30 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use App\Traits\CountForCurrentUser;
 use Illuminate\Database\Eloquent\Model;
-
-use function Symfony\Component\String\b;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Timer extends Model
 {
     use HasFactory;
     use SoftDeletes;
-
+    use CountForCurrentUser;
+    
     public $timestamps = false;
 
     protected $guarded = [];
 
-    public function client()
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
     }
 
-    public function project()
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
@@ -34,7 +35,16 @@ class Timer extends Model
         return $this->hasMany(TimeInterval::class);
     }
 
-    public function getTimerIntervalsInSeconds($intervals): array
+    /**
+     * Calculate the total time intervals in seconds from an array of time intervals
+     * (YYYY-MM-DD HH:MM:SS - YYYY-MM-DD HH:MM:SS)
+     * and convert the result to hours, minutes, and seconds.
+     *
+     * @param array $intervals Collection of arrays with time intervals to be summed.
+     *
+     * @return array An associative array representing the total time in hours, minutes, and seconds.
+     */
+    public function getTimerIntervalsInSeconds(Collection $intervals): array
     {
         $time['hours'] = 0;
         $time['minutes'] = 0;
@@ -42,7 +52,7 @@ class Timer extends Model
 
         $seconds = 0;
 
-        foreach ($intervals as $interval){
+        foreach ($intervals as $interval) {
             $seconds += $interval->getTimeIntervalInSeconds();
         }
 
