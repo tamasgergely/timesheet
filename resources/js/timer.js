@@ -41,7 +41,7 @@ export default class Timer {
         }
 
         try {
-            const response = await axios.patch(`/timer/${this.id}`, data);
+            const response = await axios.patch(`/timers/${this.id}`, data);
 
             return response;
 
@@ -52,7 +52,7 @@ export default class Timer {
 
     async save() {
         try {
-            const response = await axios.post("/timer", {
+            const response = await axios.post("/timers", {
                 client_id: this.client_id,
                 project_id: this.project_id,
                 description: this.description,
@@ -71,7 +71,7 @@ export default class Timer {
     async destroy() {
         if (this.id){
             try {
-                await axios.delete(`/timer/${this.id}`);
+                await axios.delete(`/timers/${this.id}`);
             } catch (error) {
                 console.log(error);
             }   
