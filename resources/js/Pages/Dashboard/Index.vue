@@ -24,7 +24,7 @@ const props = defineProps({
 
 const workedMinutesOptions = {
     chart: {
-        id: 'vuechart-example'
+        id: 'vuechart'
     },
     xaxis: {
         categories: Object.keys(props.workedMinutesPerMonths),
@@ -57,23 +57,36 @@ const topProjectsOptions = {
 
 let topProjectsSeconds = [];
 props.topProjects.forEach(project => {
-    topProjectsSeconds.push(project.total_seconds / props.topProjectsTotalSeconds * 100);
+    topProjectsSeconds.push(parseFloat((project.total_seconds / props.topProjectsTotalSeconds * 100).toFixed(1)));
 })
 
 const topClientsOptions = {
-    labels: props.topClients.map(client => client.name),
+    labels: props.topClients.map(client => client.name.substring(0,20)),
     plotOptions: {
         pie: {
+            offsetX: -15,
             dataLabels: {
-                offset: -10
+                offset: -10,
             }
         }
     },
+    legend: {
+        fontSize: '10px',
+        offsetX: 10,
+        width: 150,
+        height: '100%'
+    },
+    dataLabels: {
+        style: {
+            fontSize: '10px',
+        },
+    }
+
 };
 
 let topClientsSeconds = [];
 props.topClients.forEach(client => {
-    topClientsSeconds.push(client.total_seconds / props.topClientsTotalSeconds * 100);
+    topClientsSeconds.push(parseFloat((client.total_seconds / props.topClientsTotalSeconds * 100).toFixed(1)));
 })
 
 </script>
