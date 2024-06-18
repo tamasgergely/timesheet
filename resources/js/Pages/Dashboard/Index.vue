@@ -48,11 +48,32 @@ const topProjectsOptions = {
     labels: props.topProjects.map(project => project.name),
     plotOptions: {
         pie: {
+            offsetX: -15,
             dataLabels: {
-                offset: -10
+                offset: -10,
             }
         }
     },
+    legend: {
+        fontSize: '10px',
+        offsetX: 20,
+        offsetY: -20,
+        width: 140,
+        height: '100%',
+        itemMargin: {
+          horizontal: 0,
+          vertical: 0
+      },
+      markers: {
+          width: 6,
+          height: 6,
+      },          
+    },
+    dataLabels: {
+        style: {
+            fontSize: '9px',
+        },
+    }
 };
 
 let topProjectsSeconds = [];
@@ -72,17 +93,26 @@ const topClientsOptions = {
     },
     legend: {
         fontSize: '10px',
-        offsetX: 10,
-        width: 150,
-        height: '100%'
+        offsetX: 20,
+        offsetY: -20,
+        width: 140,
+        height: '100%',
+        itemMargin: {
+          horizontal: 0,
+          vertical: 0
+      },
+      markers: {
+          width: 6,
+          height: 6,
+      },          
     },
     dataLabels: {
         style: {
-            fontSize: '10px',
+            fontSize: '9px',
         },
     }
-
 };
+
 
 let topClientsSeconds = [];
 props.topClients.forEach(client => {
